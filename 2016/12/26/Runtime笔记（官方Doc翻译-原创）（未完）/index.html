@@ -90,10 +90,14 @@
 <meta property="og:url" content="http://yoursite.com/2016/12/26/Runtime笔记（官方Doc翻译-原创）（未完）/index.html">
 <meta property="og:site_name" content="Jyq's blog">
 <meta property="og:description" content="runtime系统先上runtime指南官方地址: Objective-C Runtime Programming Guide Objective-C是一门动态语言，它将静态语言在编译和链接时期做的事放在运行时处理Objective-C不仅需要一个编译器，还需要一个运行时系统来执行编译代码，这个运行时系统即Objc Runtime，运行时系统作为OC语言的操作系统。尤其是它在运行时动态的加载类，并">
-<meta property="og:updated_time" content="2016-12-26T07:58:27.000Z">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb5fs8stnkg30980f4glp.gif">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/0060lm7Tgw1fb5fs9fof3j30st07bjsu.jpg">
+<meta property="og:image" content="http://ww3.sinaimg.cn/large/0060lm7Tgw1fb5fs9dxyjj30o110ljwv.jpg">
+<meta property="og:updated_time" content="2016-12-27T09:00:15.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Runtime笔记（官方Doc翻译+原创）（未完）">
 <meta name="twitter:description" content="runtime系统先上runtime指南官方地址: Objective-C Runtime Programming Guide Objective-C是一门动态语言，它将静态语言在编译和链接时期做的事放在运行时处理Objective-C不仅需要一个编译器，还需要一个运行时系统来执行编译代码，这个运行时系统即Objc Runtime，运行时系统作为OC语言的操作系统。尤其是它在运行时动态的加载类，并">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb5fs8stnkg30980f4glp.gif">
 
 
 
@@ -429,7 +433,7 @@
 </ul>
 <p>当一个新的对象被创建的时候，内存会为它开辟一部分空间，它的实例变量同时被初始化。对象的所有变量中的第一个是一个指向它的类结构的指针，这个指针叫做<strong>isa指针</strong>，提供给对象访问它的类，通过类，到达所有该类继承的类。</p>
 <p>注意：严格说虽然不是语言的一部分，isa指针对于工作在OC运行时系统中的对象来说是必须的。一个对象需要与结构体<code>struct objc_object</code>::在objc/objc.h中定义::中定义的任何字段“等同”，但是，你很少，如果有需要创建你自己的根对象，从NSObject或者NSProxy集成而来的类对象都自动拥有isa变量。</p>
-<p><img src="" alt=""></p>
+<p><img src="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb5fs8stnkg30980f4glp.gif" alt=""></p>
 <p>当一条消息发送给一个对象的时候，消息函数跟随对象的isa指针到它的类结构，在调度表中查找方法的选择器，如果他不能在那找到选择器，<code>objc_msgSend</code>跟随指针来到父类并且试着在调度表中找到选择器，连续的失败会使<code>objc_msgSend</code>沿着继承机构向上寻找直到它到达NSObject类，一旦它发现选择器，该函数调用表中输入的方法并将其传递给接收对象的数据结构。</p>
 <p><strong>这里着重说明一个知识点：</strong><br>       <em>在一个类中调用<code>[super class]</code>很多初学者会认为输出父类的名字，但是结果却还是与<code>[self class]</code>相同的输出，而又不理解，其实self是类的隐藏参数，指向当前调用方法的类，另一个隐藏参数是<code>_cmd</code>前面已经介绍过，带表当前方法的selector，这里只关注这个self，而super并不是一个隐藏参数，它是一个“编译器指示符”，和self指向相同的消息接受者，<code>[self class]</code>和<code>[super class]</code>，接收class消息的都是指向当前类的指针，而不是想当然的super指向的父类，不同之处在于super只是告诉编译器，调用方法是要去调用父类的class方法而不是本类的，其实self和super最后调用的都是NSObject定义的方法，输出本类的类名，所以才会出现上面那种结果。</em></p>
 <p>这就是方法实现在运行时才会确定的实现方式，或者用面向对象编程的行话，那些方法与消息动态绑定。</p>
@@ -452,7 +456,9 @@
 </code></pre><p>self在两个参数中更有用一些,事实上，这是接收的对象的实例变量对于方法定义变得可用的方式。</p>
 <h2 id="得到一个方法地址"><a href="#得到一个方法地址" class="headerlink" title="得到一个方法地址"></a>得到一个方法地址</h2><p>绕过动态绑定的唯一方式就是得到方法的地址并像调用函数一样调用它。这在极少数场合是合适的，当一个特定的方法被连续调用多次的时候而且你想避免方法每次被执行发送消息的开销。</p>
 <p>一个定义在NSObject类中的方法，<code>methodForSelector:</code>你可以要求一个指向实现一个方法的过程的指针，然后用指针调用这个过程，<code>methodForSelector:</code>返回的指针必须仔细转换到恰当的函数类型。返回和参数类型都应该包含在转换中。</p>
-<p>下面的例子展示了setFilled:方法的实现过程如何被调用：<br>    void (<em>setter)(id, SEL, BOOL);<br>    int i;<br>    setter = (void (</em>)(id, SEL, BOOL))[target<br>        methodForSelector:@selector(setFilled:)];<br>    for ( i = 0 ; i &lt; 1000 ; i++ )  {<br>        setter(targetList[i], @selector(setFilled:), YES);<br>    }<br>第一次被传过去的两个参数是接收对象self和方法选择器<code>_cmd</code>。<br>这些参数在方法语法中被隐藏，但是当方法被当做函数调用的时候必须显示的传递。</p>
+<p>下面的例子展示了setFilled:方法的实现过程如何被调用：<br>void (*setter)(id, SEL, BOOL);<br>int i;  </p>
+<p>setter = (void (*)(id, SEL, BOOL))[target<br>    methodForSelector:@selector(setFilled:)];<br>for ( i = 0 ; i &lt; 1000 ; i++ )<br>    setter(targetList[i], @selector(setFilled:), YES);</p>
+<p>第一次被传过去的两个参数是接收对象self和方法选择器<code>_cmd</code>。<br>这些参数在方法语法中被隐藏，但是当方法被当做函数调用的时候必须显示的传递。</p>
 <p>使用<code>methodForSelector:</code>来规避动态绑定节约了大量发送消息所需的时间，要使节省变得有意义，必须当一个特定的消息重复很多次的时候，就像上面for循环展示的那样。</p>
 <p>使用<code>methodForSelector:</code>来规避动态绑定节约了大量发送消息所需的时间，要使节省变得有意义，必须当一个特定的消息重复很多次的时候，就像上面for循环展示的那样。</p>
 <hr>
@@ -471,8 +477,8 @@
 @end  
 </code></pre><p>官方的runtime编程指南到这里就没在继续详细讲解了，你可以喷我，但我还是想说，新手根本看不懂所以还要再增加篇幅从头讲。</p>
 <p>每个方法都有一个<strong>SEL(selector)</strong>和一个<strong>IML(implement)</strong>，SEL可以随便写，但是不一定有对应的IML，如果消息函数沿着继承层次结构找到了顶端还是找不到对应的方法实现，就会抛出异常而crash。</p>
-<p>上文提到“消息函数做了所有动态绑定所必需的事情：它首先找到选择器所引用的方法实现。”但是如果一直没有找到，就会开始尝试动态解析，消息转发，标准消息转发：<br><img src="" alt=""></p>
-<p>其实这就是通过SEL查找IML，这个过程也可以用下图表示：<br><img src="" alt=""></p>
+<p>上文提到“消息函数做了所有动态绑定所必需的事情：它首先找到选择器所引用的方法实现。”但是如果一直没有找到，就会开始尝试动态解析，消息转发，标准消息转发：<br><img src="http://ww2.sinaimg.cn/large/0060lm7Tgw1fb5fs9fof3j30st07bjsu.jpg" alt=""></p>
+<p>其实这就是通过SEL查找IML，这个过程也可以用下图表示：<br><img src="http://ww3.sinaimg.cn/large/0060lm7Tgw1fb5fs9dxyjj30o110ljwv.jpg" alt=""></p>
 <h2 id="resolveInstanceMethod函数"><a href="#resolveInstanceMethod函数" class="headerlink" title="resolveInstanceMethod函数"></a>resolveInstanceMethod函数</h2><p>函数原型是：<br><code>1.  + (BOOL)resolveInstanceMethod:(SEL)name;</code></p>
 <p>在运行时（runtime），SEL没有找到对应的IML就会先执行这个函数，这个函数是给类利用<code>class_addMethod</code>添加方法的机会。如果实现了添加方法的代码则返回YES，如果没有实现则返回NO。<br>新建一个工程在.m文件添加如下代码：</p>
 <pre><code>#import &quot;ViewController.h&quot;  
