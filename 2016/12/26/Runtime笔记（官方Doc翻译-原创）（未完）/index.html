@@ -93,7 +93,9 @@
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb5fs8stnkg30980f4glp.gif">
 <meta property="og:image" content="http://ww2.sinaimg.cn/large/0060lm7Tgw1fb5fs9fof3j30st07bjsu.jpg">
 <meta property="og:image" content="http://ww3.sinaimg.cn/large/0060lm7Tgw1fb5fs9dxyjj30o110ljwv.jpg">
-<meta property="og:updated_time" content="2016-12-27T09:00:15.000Z">
+<meta property="og:image" content="http://ww3.sinaimg.cn/large/0060lm7Tgw1fb6kzfvbfug30ag06pdfq.gif">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb8ve8brgyj307q0f23z1.jpg">
+<meta property="og:updated_time" content="2016-12-31T11:51:58.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Runtime笔记（官方Doc翻译+原创）（未完）">
 <meta name="twitter:description" content="runtime系统先上runtime指南官方地址: Objective-C Runtime Programming Guide Objective-C是一门动态语言，它将静态语言在编译和链接时期做的事放在运行时处理Objective-C不仅需要一个编译器，还需要一个运行时系统来执行编译代码，这个运行时系统即Objc Runtime，运行时系统作为OC语言的操作系统。尤其是它在运行时动态的加载类，并">
@@ -456,8 +458,7 @@
 </code></pre><p>self在两个参数中更有用一些,事实上，这是接收的对象的实例变量对于方法定义变得可用的方式。</p>
 <h2 id="得到一个方法地址"><a href="#得到一个方法地址" class="headerlink" title="得到一个方法地址"></a>得到一个方法地址</h2><p>绕过动态绑定的唯一方式就是得到方法的地址并像调用函数一样调用它。这在极少数场合是合适的，当一个特定的方法被连续调用多次的时候而且你想避免方法每次被执行发送消息的开销。</p>
 <p>一个定义在NSObject类中的方法，<code>methodForSelector:</code>你可以要求一个指向实现一个方法的过程的指针，然后用指针调用这个过程，<code>methodForSelector:</code>返回的指针必须仔细转换到恰当的函数类型。返回和参数类型都应该包含在转换中。</p>
-<p>下面的例子展示了setFilled:方法的实现过程如何被调用：<br>void (*setter)(id, SEL, BOOL);<br>int i;  </p>
-<p>setter = (void (*)(id, SEL, BOOL))[target<br>    methodForSelector:@selector(setFilled:)];<br>for ( i = 0 ; i &lt; 1000 ; i++ )<br>    setter(targetList[i], @selector(setFilled:), YES);</p>
+<p>下面的例子展示了setFilled:方法的实现过程如何被调用：<br>void (*setter)(id, SEL, BOOL);<br>int i;<br>setter = (void (*)(id, SEL, BOOL))[target<br>    methodForSelector:@selector(setFilled:)];<br>for ( i = 0 ; i \&lt; 1000 ; i++ )<br>    setter(targetList[i], @selector(setFilled:), YES);</p>
 <p>第一次被传过去的两个参数是接收对象self和方法选择器<code>_cmd</code>。<br>这些参数在方法语法中被隐藏，但是当方法被当做函数调用的时候必须显示的传递。</p>
 <p>使用<code>methodForSelector:</code>来规避动态绑定节约了大量发送消息所需的时间，要使节省变得有意义，必须当一个特定的消息重复很多次的时候，就像上面for循环展示的那样。</p>
 <p>使用<code>methodForSelector:</code>来规避动态绑定节约了大量发送消息所需的时间，要使节省变得有意义，必须当一个特定的消息重复很多次的时候，就像上面for循环展示的那样。</p>
@@ -607,7 +608,245 @@ void dynamicMethodIMP(id self, SEL _cmd){
 <hr>
 <h1 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h1><p>向一个对象发送消息，对象没有处理消息，就会报错。然而，在报错之前，运行时系统给接收消息的对象两个选择去处理消息。</p>
 <h2 id="转发"><a href="#转发" class="headerlink" title="转发"></a>转发</h2><p>如果你给一个对象发送消息，并且这个对象没有处理这个消息，在抛出一个错误之前，运行时系统会向对象发送一个消息：<br><code>forwardInvocation:</code></p>
-<p>用NSInvocation作为它的唯一实参，通过NSInvocation对象封装了原始的消息和实参<strong>(未完成)</strong></p>
+<p>用NSInvocation作为它的唯一实参，通过NSInvocation对象封装了原始的消息和实参。</p>
+<p>你可以实现<code>forwardInvocation:</code>方法来给消息一个默认的响应，或者从其他方式避免错误。正如它的名字那样，这个方法被用来将消息转发给其他对象。</p>
+<p>查看转发的范围和意图，想象下列场景：假如，开始，你设计了一个对象可以响应一个叫做<code>negotiate</code>的消息，并且你想让它的响应包含一个其他类型的对象的响应。你可以通过将<code>negotiate</code>消息传递给你实现的<code>negotiate</code>方法的主体里的对象来轻松的实现。</p>
+<p>进一步采取这一步，然后假设你想让你的对象准确地响应另一个类中<code>negotiate</code>消息实现。一种实现方法是使你的类从其他类继承这个方法。然而，它或许是不可能实现的。这也许可以很好的解释，为什么你的类和实现了<code>negotiate</code>方法的类在继承层次的不同分支。</p>
+<p>即使你的类不能继承<code>negotiate</code>方法，你仍然可以通过实现一个将消息传递给其他类的实例的方法来借用它。</p>
+<pre><code>- (id)negotiate
+{
+    if ( [someOtherObject respondsTo:@selector(negotiate)] )
+        return [someOtherObject negotiate];
+    return self;
+}
+</code></pre><p>这种方式可能有一点麻烦，尤其是你想使你的对象传递一定数量的消息给另一个对象。你需要实现并覆盖每一个你想要从其他类借用的方法。此外，当你写代码时，你可能想要转发全部的消息集，对于你不知道的句柄，这是不可能的，该消息集合可能取决于运行时的事件，并且它可能会改变，因为将来会有新的方法和类被实现。</p>
+<p>对于这个问题，<code>forwardInvocation:</code>消息提供了一个较少的特别指定的解决方法，并且这个方法是动态的而不是静态的。它像这样工作：当一个对象不能响应一个消息，因为它并没有方法可以匹配消息中的SEL，runtime系统通过发送一个<code>forwardInvocation</code>消息来告知对象。每一个对象都从NSObject类继承这个<code>forwardInvocation</code>方法。然而NSObject版本的方法只是简单地调用了<code>doesNotRecognizeSelector:</code>方法，通过覆写NSObject的版本并加入你自己的实现，你可以利用<code>forwardInvocation</code>消息提供的机会将消息转发给其他对象。</p>
+<p>为了转发一个消息，所有的<code>forwardInvocation</code>方法需要这样做:</p>
+<ul>
+<li>确定消息应该到哪里</li>
+<li>带着原始的实参一起发送它</li>
+</ul>
+<p>消息可以与<code>invokeWithTarget:</code>方法一起被发送:</p>
+<pre><code>- (void)forwardInvocation:(NSInvocation *)anInvocation
+{
+    if ([someOtherObject respondsToSelector:[anInvocation selector]])
+        [anInvocation invokeWithTarget:someOtherObject];
+    else
+        [super forwardInvocation:anInvocation];
+}
+</code></pre><p>转发的消息的返回值会被返回到原始的发送者。所有类型的返回值都可以被传递到发送者，包括id, structure，和双精度浮点数。</p>
+<p>一个<code>forwardInvocation:</code>方法可以作为不识别消息的分配中心，将它们打包分发给不同的接受者。或者它作为一个中转站，发送所有的消息到相同的目的地。它可以将一条消息转换为另一条消息，或者简单地吞没一些消息所以没有响应并且没有错误。<code>forwardInvocation</code>方法还可以将几条消息合并为一个单独的响应。<code>forwardInvocation</code>所做的就是提交给实现者。然而，它所提供的在一个转发链中关联对象的机会为程序设计开辟了更多可能。</p>
+<p>注意：<code>forwardInvocation</code>开始处理消息，除非他们不调用名义接收器中已经存在的消息。如果，例如你想让你的对象转发<code>negotiate</code>消息给另一个对象，它自己就不能够有<code>negotiate</code>方法。如果它有，消息绝对不会到达<code>forwardInvocation:</code>。</p>
+<p>想要了解更多关于转发和调用的信息，在Foundation框架中查看NSInvocation类说明。</p>
+<h2 id="转发和多重继承"><a href="#转发和多重继承" class="headerlink" title="转发和多重继承"></a>转发和多重继承</h2><p>转发模拟继承，被用来给OC程序添加一些多继承效果。一个通过转发来响应消息的对象呈现出借用或是继承了定义在另一个类中方法实现的效果。<br><img src="http://ww3.sinaimg.cn/large/0060lm7Tgw1fb6kzfvbfug30ag06pdfq.gif" alt=""><br>在这个插图中，一个Warrior的实例对象转发了一个<code>negotiate</code>消息给一个Diplomat类的实例。Warrior对于<code>negotiate</code>消息会呈现出和Diplomat一样的响应。它似乎对<code>negotiate</code>消息做出响应，并对所有实际目的做出回应（虽然事实上是一个Diplomat在工作）。</p>
+<p>转发消息的对象从而 从继承树上的两个分支继承了方法——它自己的分支和响应消息的对象的分支。在上面的例子中，他看上去好像Warrior类继承了Diplomat类以及它自己的父类。</p>
+<h2 id="代理对象"><a href="#代理对象" class="headerlink" title="代理对象"></a>代理对象</h2><p>转发不仅仅模拟多继承，它也使得可以开发代表或覆盖更多实体类型的轻量级对象，The surrogate stands in for the other object and funnels messages to it.（谁来翻译一下）</p>
+<p>在The Objective-C Programing Language中讨论的远程通知就是一个代理，代理负责管理对一个远程接受者转发消息的细节，确保参数值在整个链接上被复制和检索，等等。但是它并不试图去做其他更多的事情，它不复制远程对象的功能，只是给远程对象一个它可以在其他应用接受消息的本地地址。</p>
+<p>其他类型的代理对象同意可以。假设，例如你有一个对象操作许多数据——也许它创建一个复杂的图片或者读取磁盘上一个文件的内容。设置这个对象可能非常耗时，所以你宁愿懒惰地使用它——当它真正被需要或者当系统资源暂时空闲的时候。同一时间，你需要至少一个此对象的占位符来保证其他对象在该应用中正常工作。</p>
+<p>在这种情况下，你开始可能创建了一个不成熟的对象，但是你可以为它创建一个轻量级的代理。这个对象可能会自己做一些事情，例如询问关于数据的问题，但是大多数时候它仅仅是为更大的对象占据一个位置，当时间到了，给它转发消息。当代理的<code>forwardInvocation</code>方法首先接收到去往其他对象的消息，它会确保对象存在并且如果没有被创建的话它会创建对象。较大对象的所有消息都会通过代理，所以，至于关于程序的其他部分，代理和较大的对象是相同的。</p>
+<h2 id="转发和继承"><a href="#转发和继承" class="headerlink" title="转发和继承"></a>转发和继承</h2><p>虽然转发模拟继承，但是NSObject类绝对不会混淆两者。像方法<code>respondsToSelector:</code>和<code>isKindOfClass</code>仅仅查看继承层次结构，并不在转发链上。如果，例如一个Warrios对象被询问是否响应<code>negotiate</code>消息<br> if ([aWarrior respondsToSelector:@selector(negotiate)])<br>答案是NO，即使它能不报错误地接收<code>negotiate</code>消息并响应他们，在某种意义上，通过转发消息给一个Diolomat对象。</p>
+<p>在许多例子中，答案是NO。但它可能不是。如果你使用转发设置一个代理对象或者扩展一个类的能力，转发机制大概应该像继承一样透明。如果你想让你的对象表现出它们好像真正的继承了他们转发消息的目标的行为，你需要重新实现<code>respondsToSelector:</code>方法和<code>isKindOfClass</code>方法来包含你的转发规则。</p>
+<pre><code>- (BOOL)respondsToSelector:(SEL)aSelector
+{
+    if([super respondsToSelector:aSelector])
+        return YES;
+    else{
+        /* Here, test whether the aSelector message can*
+         * be forwarded to another object and whether that *
+         * object can respond to it. Return YES if it can.   *
+        }
+    return NO;
+}
+</code></pre><p>除了<code>respondsToSelector:</code>和<code>isKindOfClass</code>之外，<code>instancesRespondToSelector:</code>方法也能反映转发规则。如果协议被使用，<code>conformsToProtocol:</code>方法同样被添加到名单。同样的，如果一些对象转发任何它们接收到的远程消息，它应该有一个<code>methodSignatureForSelector</code>方法可以返回最终响应转发消息的方法的准确描述；例如，如果一个对象可以转发消息给它的代理，你如下应该实现<code>methodSignatureForSelector</code>：</p>
+<pre><code>- (NSMethodSignature*)methodSignatureForSelector:(SEL)selector
+{
+    NSMethodSignature *signature = [super methodSignatureForSelector:selector];
+    if(!signature){
+        signature = [surrogate methodSignatureForSelector:selector];
+    }
+    return signature;
+}
+</code></pre><p>你可能考虑将转发规则放在私有代码中，并拥有他们，包括<code>forwardInvocation</code>，调用它。</p>
+<p>注意：这是一种高级技术，仅仅适合没有其他解决办法的时候使用。它并不是意在代替继承来使用。如果你一定要使用这种技术，确保你完全了解了执行转发的类和要被转发到达的类的行为。</p>
+<p>上述提及的方法都被编写在Foundation框架下的NSObject类的说明中。get有关<code>invokeWithTar</code>的信息请查看Foundation框架下的 NSInvocation类说明。</p>
+<hr>
+<h1 id="类型编码"><a href="#类型编码" class="headerlink" title="类型编码"></a>类型编码</h1><p>为了辅助运行时系统，编译器为字符串中的每个方法编码返回值和参数类型，并将字符串与方法选择器相关联。它使用的编码模式同样适用于其他上下文，因此公开了可获得的编译器指令@encode。当给一个类型说明，<code>@encode</code>返回该类型的编码字符串。这些类型可以是基础类型，例如整形，指针，一个结构体或者联合体，或者一个类名——任何类型都可以，事实上，他可以用作C语言<code>sizeof</code>运算符的参数。</p>
+<p>char *buf1 = @encode(int **);<br>char *buf2 = @encode(struct key);<br>char *buf3 = @encode(Rectangle);</p>
+<p>下面的表格列出了类型编码。注意它们当中许多与你使用编码一个对象归档或者分发的代码重叠。然后这里列出的代码你不能用来编写一个编码器，这些代码当你编写一个并不是由@encode生成的编码器时你可能想要使用。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Code</th>
+<th style="text-align:center">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">c</td>
+<td style="text-align:center">A char</td>
+</tr>
+<tr>
+<td style="text-align:center">i</td>
+<td style="text-align:center">An int</td>
+</tr>
+<tr>
+<td style="text-align:center">l</td>
+<td style="text-align:center">A long  is treated as a 32-bit quantity on 64-bit programs.</td>
+</tr>
+<tr>
+<td style="text-align:center">q</td>
+<td style="text-align:center">A long long</td>
+</tr>
+<tr>
+<td style="text-align:center">c</td>
+<td style="text-align:center">An unsigned char</td>
+</tr>
+<tr>
+<td style="text-align:center">I</td>
+<td style="text-align:center">An unsigned int</td>
+</tr>
+<tr>
+<td style="text-align:center">S</td>
+<td style="text-align:center">An unsigned short</td>
+</tr>
+<tr>
+<td style="text-align:center">L</td>
+<td style="text-align:center">An unsigned short</td>
+</tr>
+<tr>
+<td style="text-align:center">Q</td>
+<td style="text-align:center">An unsigned long long</td>
+</tr>
+<tr>
+<td style="text-align:center">f</td>
+<td style="text-align:center">An unsigned long long</td>
+</tr>
+<tr>
+<td style="text-align:center">d</td>
+<td style="text-align:center">A double</td>
+</tr>
+<tr>
+<td style="text-align:center">B</td>
+<td style="text-align:center">A C++ bool or a C99 _Bool</td>
+</tr>
+<tr>
+<td style="text-align:center">v</td>
+<td style="text-align:center">A void</td>
+</tr>
+<tr>
+<td style="text-align:center">*</td>
+<td style="text-align:center">A character string (char *)</td>
+</tr>
+<tr>
+<td style="text-align:center">@</td>
+<td style="text-align:center">An object (whether statically typed or typed id)</td>
+</tr>
+<tr>
+<td style="text-align:center">#</td>
+<td style="text-align:center">A class object (Class)</td>
+</tr>
+<tr>
+<td style="text-align:center">:</td>
+<td style="text-align:center">A method selector (SEL)</td>
+</tr>
+<tr>
+<td style="text-align:center">[array type]</td>
+<td style="text-align:center">An array</td>
+</tr>
+<tr>
+<td style="text-align:center">{name=type…}</td>
+<td style="text-align:center">A structure</td>
+</tr>
+<tr>
+<td style="text-align:center">(name=type…)</td>
+<td style="text-align:center">A union</td>
+</tr>
+<tr>
+<td style="text-align:center">bnum</td>
+<td style="text-align:center">A bit field of num bits</td>
+</tr>
+<tr>
+<td style="text-align:center">^type</td>
+<td style="text-align:center">A pointer to type</td>
+</tr>
+<tr>
+<td style="text-align:center">?</td>
+<td style="text-align:center">An unknown type (among other things, this code is used for function pointers)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>重要：Objective-C不支持long double类型。<code>@encode(long double)</code>返回d，与double类型返回的一样。</strong></p>
+<p>数组的类型代码在方括号中；数组中的元素数量紧随开括号指定，在数组类型之前。例如一个包含12个浮点数指针的数组将会被编码为：<code>[12 ^f]</code></p>
+<p>结构体被指定在大括号中，联合体在圆括号中。结构体标志首先被列出，紧跟一个等号标识符和用序列表示的结构体内容的代码。例如，结构体：<br>    typedef struct example {<br>    id   anObject;<br>    char *aString;<br>    int  anInt;<br>    } Example</p>
+<p>会被编码为：<br><code>{example=@\*i}</code></p>
+<p>相同的编码结果导致定义的类型名字或者结构体标识是否传递给@encode。结构体指针的编码携带与结构体字段相同的信息量：<br><code>^{example=@\*i}</code></p>
+<p>然而另一个间接的级别去除了内部类型规范：<br><code>^^{example}</code></p>
+<p>对待对象会像对待结构体那样。例如，将NSObject类名传入@encode()产生这样的编码：<br><code>{NSObject=# }</code></p>
+<p>NSObject类只声明一个实例变量isa，类型是Class。</p>
+<p>注意，尽管@encode指令不返回它们，当它们需要在协议中声明方法是，runtime系统使用额外的编码列表中的类型限定符。<br><img src="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb8ve8brgyj307q0f23z1.jpg" alt=""></p>
+<hr>
+<h1 id="声明属性"><a href="#声明属性" class="headerlink" title="声明属性"></a>声明属性</h1><p>当编译器遇到属性声明，它生成与封闭类，类别或者协议相关联的描述性元数据。你可以使用支持在类或协议中中通过名字查看属性的函数来访问这些元数据，获得属性的@encode字符编码类型，并将属性的属性列表复制一份C字符串数组。每个类和协议都有一个声明的属性列表。</p>
+<h2 id="属性类型和函数"><a href="#属性类型和函数" class="headerlink" title="属性类型和函数"></a>属性类型和函数</h2><p>Property结构定义了属性描述符的不透明句柄。<br><code>typedef struct objc\_property \*Property</code></p>
+<p>你可以使用函数class_copyPropertyList和protocol_copyPropertyList来分别地检索一个与类和协议相关的属性数组：<br><code>objc\_property\_t *class\_copyPropertyList(Class cls, unsigned int *outCount)</code><br><code>objc\_property\_t *protocol\_copyPropertyList(Protocol *proto, unsigned int \*outCount)</code></p>
+<p>例如给出如下类声明：<br>    @interface Lender : NSObject{<br>        float alone;<br>    }<br>    @property float alone;<br>    @end</p>
+<p><strong>你可以这样获得属性列表:</strong><br>    id LenderClass = objc_getClass(“Lender”);<br>    unsigned int outCount;<br>    objc_property_t *properties = class_copyPropertyList(LenderClass, &amp;outCount);</p>
+<p>你可以使用property_getName函数来发现一个属性名字：<br><code>const char \*property\_getName(objc\_property\_t property)</code></p>
+<p>你可以使用函数class_getProperty和class_getProperty来获得类和协议中给定名称的属性的引用:<br><code>objc\_property\_t class\_getProperty(Class cls, const char \*name)</code><br><code>objc\_property\_t protocol\_getProperty(Protocol *proto, const char *name, BOOL isRequiredProperty, BOOL isInstanceProperty)</code></p>
+<p>你可以使用 property_getAttributes函数获得一个属性的名字和@encode编码的类型字符串。对于编码类型字符串的详细内容，查看Type Encoding；对于这个字符串的详细内容，查看Property Type String 和Property Attribute Description Examples。（都在本文中）</p>
+<p><code>const char \*property\_getAttributes(objc\_property\_t property)</code></p>
+<p><strong>同时使用这些函数，使用下面的代码你可以打印出所有与类关联的属性：</strong><br>    id LenderClass = objc_getClass(“Lender”);<br>    unsigned int outCount, i;<br>    objc_property_t *properties = class_copyPropertyList(LenderClass, &amp;outCount);<br>    for (i = 0; i &lt; outCount; i++) {<br>        objc_property_t property = properties[i];<br>        fprintf(stdout, “%s %s\n”, property_getName(property), property_getAttributes(property));<br>    }</p>
+<h2 id="属性类型字符串"><a href="#属性类型字符串" class="headerlink" title="属性类型字符串"></a>属性类型字符串</h2><p>你可以使用<code>property_getAttributes</code>函数查看属性的@encode编码名称和属性中的其他信息。</p>
+<p>该字符串以字母T开始，紧跟着@encode类型和一个逗号，以字母V结束后跟实例变量名称。在它们中间，属性被指定如下描述符，以逗号分隔。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Code</th>
+<th style="text-align:center">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">R</td>
+<td style="text-align:center">The property is read-only (readonly).</td>
+</tr>
+<tr>
+<td style="text-align:center">C</td>
+<td style="text-align:center">The property is a copy of the value last assigned (copy).</td>
+</tr>
+<tr>
+<td style="text-align:center">&amp;</td>
+<td style="text-align:center">The property is a reference to the value last assigned (retain).</td>
+</tr>
+<tr>
+<td style="text-align:center">N</td>
+<td style="text-align:center">The property is non-atomic (nonatomic).</td>
+</tr>
+<tr>
+<td style="text-align:center">G\&lt; name ></td>
+<td style="text-align:center">The property defines a custom getter selector name. The name follows the G (for example, GcustomGetter,).</td>
+</tr>
+<tr>
+<td style="text-align:center">S\&lt; name ></td>
+<td style="text-align:center">The property defines a custom setter selector name. The name follows the S (for example, ScustomSetter:,).</td>
+</tr>
+<tr>
+<td style="text-align:center">D</td>
+<td style="text-align:center">The property is dynamic (@dynamic).</td>
+</tr>
+<tr>
+<td style="text-align:center">W</td>
+<td style="text-align:center">The property is a weak reference (__weak).</td>
+</tr>
+<tr>
+<td style="text-align:center">P</td>
+<td style="text-align:center">The property is eligible for garbage collection.</td>
+</tr>
+<tr>
+<td style="text-align:center">t\&lt; encoding ></td>
+<td style="text-align:center">Specifies the type using old-style encoding.</td>
+</tr>
+</tbody>
+</table>
 
       
     </div>
@@ -814,7 +1053,7 @@ void dynamicMethodIMP(id self, SEL _cmd){
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#runtime系统"><span class="nav-number">1.</span> <span class="nav-text">runtime系统</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#与运行时系统的交互"><span class="nav-number">2.</span> <span class="nav-text">与运行时系统的交互</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#OC源码"><span class="nav-number">2.1.</span> <span class="nav-text">OC源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NSObject方法"><span class="nav-number">2.2.</span> <span class="nav-text">NSObject方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#运行时函数"><span class="nav-number">2.3.</span> <span class="nav-text">运行时函数</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息机制"><span class="nav-number">3.</span> <span class="nav-text">消息机制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#objc-msgSend函数"><span class="nav-number">3.1.</span> <span class="nav-text">objc_msgSend函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用隐藏参数"><span class="nav-number">3.2.</span> <span class="nav-text">使用隐藏参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#得到一个方法地址"><span class="nav-number">3.3.</span> <span class="nav-text">得到一个方法地址</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#动态方法解析"><span class="nav-number">4.</span> <span class="nav-text">动态方法解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#动态方法解析-1"><span class="nav-number">4.1.</span> <span class="nav-text">动态方法解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#resolveInstanceMethod函数"><span class="nav-number">4.2.</span> <span class="nav-text">resolveInstanceMethod函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#forwardingTargetForSelector函数"><span class="nav-number">4.3.</span> <span class="nav-text">forwardingTargetForSelector函数</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#动态加载"><span class="nav-number">5.</span> <span class="nav-text">动态加载</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息转发"><span class="nav-number">6.</span> <span class="nav-text">消息转发</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#转发"><span class="nav-number">6.1.</span> <span class="nav-text">转发</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#runtime系统"><span class="nav-number">1.</span> <span class="nav-text">runtime系统</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#与运行时系统的交互"><span class="nav-number">2.</span> <span class="nav-text">与运行时系统的交互</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#OC源码"><span class="nav-number">2.1.</span> <span class="nav-text">OC源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NSObject方法"><span class="nav-number">2.2.</span> <span class="nav-text">NSObject方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#运行时函数"><span class="nav-number">2.3.</span> <span class="nav-text">运行时函数</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息机制"><span class="nav-number">3.</span> <span class="nav-text">消息机制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#objc-msgSend函数"><span class="nav-number">3.1.</span> <span class="nav-text">objc_msgSend函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用隐藏参数"><span class="nav-number">3.2.</span> <span class="nav-text">使用隐藏参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#得到一个方法地址"><span class="nav-number">3.3.</span> <span class="nav-text">得到一个方法地址</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#动态方法解析"><span class="nav-number">4.</span> <span class="nav-text">动态方法解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#动态方法解析-1"><span class="nav-number">4.1.</span> <span class="nav-text">动态方法解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#resolveInstanceMethod函数"><span class="nav-number">4.2.</span> <span class="nav-text">resolveInstanceMethod函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#forwardingTargetForSelector函数"><span class="nav-number">4.3.</span> <span class="nav-text">forwardingTargetForSelector函数</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#动态加载"><span class="nav-number">5.</span> <span class="nav-text">动态加载</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#消息转发"><span class="nav-number">6.</span> <span class="nav-text">消息转发</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#转发"><span class="nav-number">6.1.</span> <span class="nav-text">转发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#转发和多重继承"><span class="nav-number">6.2.</span> <span class="nav-text">转发和多重继承</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代理对象"><span class="nav-number">6.3.</span> <span class="nav-text">代理对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#转发和继承"><span class="nav-number">6.4.</span> <span class="nav-text">转发和继承</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#类型编码"><span class="nav-number">7.</span> <span class="nav-text">类型编码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#声明属性"><span class="nav-number">8.</span> <span class="nav-text">声明属性</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#属性类型和函数"><span class="nav-number">8.1.</span> <span class="nav-text">属性类型和函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#属性类型字符串"><span class="nav-number">8.2.</span> <span class="nav-text">属性类型字符串</span></a></li></ol></li></ol></div>
             
 
           </div>
