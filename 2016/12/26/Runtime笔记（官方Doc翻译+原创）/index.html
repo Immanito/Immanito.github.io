@@ -95,7 +95,7 @@
 <meta property="og:image" content="http://ww3.sinaimg.cn/large/0060lm7Tgw1fb5fs9dxyjj30o110ljwv.jpg">
 <meta property="og:image" content="http://ww3.sinaimg.cn/large/0060lm7Tgw1fb6kzfvbfug30ag06pdfq.gif">
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb8ve8brgyj307q0f23z1.jpg">
-<meta property="og:updated_time" content="2016-12-31T12:29:53.000Z">
+<meta property="og:updated_time" content="2017-01-05T07:31:43.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Runtime笔记（官方Doc翻译+原创）">
 <meta name="twitter:description" content="runtime系统先上runtime指南官方地址: Objective-C Runtime Programming Guide Objective-C是一门动态语言，它将静态语言在编译和链接时期做的事放在运行时处理Objective-C不仅需要一个编译器，还需要一个运行时系统来执行编译代码，这个运行时系统即Objc Runtime，运行时系统作为OC语言的操作系统。尤其是它在运行时动态的加载类，并">
@@ -417,10 +417,10 @@
 <h2 id="OC源码"><a href="#OC源码" class="headerlink" title="OC源码"></a>OC源码</h2><p>大部分时候，运行时系统在后台自动工作，你需要做的仅仅是编写并运行OC源码。<br>当你编译包含OC类和方法的代码时，编译器为了实现语言的动态特性创建数据结构和函数调用。数据结构捕获类、类别定义和协议声明中的信息；它们包括OC语言中定义类时涉及到的类和协议对象，协议，以及SEL，实例变量模板，和其他从源码中提取的信息。主要的运行时函数是发送消息，它由源代码的消息表达式调用。</p>
 <h2 id="NSObject方法"><a href="#NSObject方法" class="headerlink" title="NSObject方法"></a>NSObject方法</h2><p>大多数Cocoa中的对象都是NSObject类的子类，所以大多数对象都继承它定义的方法。（一个值得注意的例外是NSProxy类。）它的方法因此建立了每个实例和每个类对象固有的行为。然而，在少数情况下，NSObject类仅仅为了表明一些事情应该这么做而定义一个模板，它本身不提供任何必需的源码。</p>
 <p>例如，NSObject类定义了一个实例方法description，这个方法返回一个描述该类内容的字符串。这主要用于调试——GDB打印对象 命令打印从这个方法返回的字符串，NSObject类的这个方法的实现不知道包含有什么类，所以它返回包含对象名字和地址的字符串。NSObject的子类可以实现这个方法来返回更多详细信息。例如：Foundation框架下的NSArray类返回它包含的所有对象的描述。<br>一些NSObject的方法简单地查询运行时系统的信息。这些方法允许对象执行自省（自我认知），这些举例列出的方法都是类方法，其要求对象识别他们的类；<code>isKindOfClass:</code>和<code>isMemberOfClass:</code>它测试对象在继承层次结构中的位置；repondsToSelector:它表示一个对象能接受一个特定的消息，conformsToProtocol它表示一个对象是否实现了定义在特定协议中的方法；<code>methodForSelector:</code>提供了方法的实现地址。像这些方法给一个对象认识自身的能力。</p>
-<h2 id="运行时函数"><a href="#运行时函数" class="headerlink" title="运行时函数"></a>运行时函数</h2><p>运行时系统是一个在位于<strong>/usr/include/objc</strong>的头文件中包含了一些列函数和数据结构的动态共享库，许多函数与允许你使用C语言硬编码去复写在你写OC代码时编译器做的事情。其他形式的基础功能导入时通过NSObject类的方法。这些函数使得开发其他面向运行时系统和增强开发环境的工具成为可能；它们不需要OC语言环境。然而，一部分运行时函数可能会不定期的被用来写OC程序。所有的这些函数都被记录在::Objective-C Runtime Reference::。(在API文档中查看)</p>
+<h2 id="运行时函数"><a href="#运行时函数" class="headerlink" title="运行时函数"></a>运行时函数</h2><p>运行时系统是一个在位于<strong>/usr/include/objc</strong>的头文件中包含了一系列函数和数据结构的动态共享库，许多函数与允许你使用C语言硬编码去复写在你写OC代码时编译器做的事情。其他形式的基础功能导入时通过NSObject类的方法。这些函数使得开发其他面向运行时系统和增强开发环境的工具成为可能；它们不需要OC语言环境。然而，一部分运行时函数可能会不定期的被用来写OC程序。所有的这些函数都被记录在::Objective-C Runtime Reference::。(在API文档中查看)</p>
 <hr>
 <h1 id="消息机制"><a href="#消息机制" class="headerlink" title="消息机制"></a>消息机制</h1><p>本节描述消息表达式是如何转为<code>objc_msgSend</code>的函数调用和如何通过方法名来引用一个方法。然后讲解如何利用<code>objc_msgSend</code>和如何绕过动态绑定。</p>
-<h2 id="objc-msgSend函数"><a href="#objc-msgSend函数" class="headerlink" title="objc_msgSend函数"></a>objc_msgSend函数</h2><p>在OC中，直到运行时之前，消息不会被绑定到方法的实现。编译器会转换一个消息表达式:<br><code>[receiver message]</code><br>转变为一个消息函数的调用——<code>objc_msgSend</code>。函数带有接受者和方法提及的名字，作为方法选择器的两个主要参数:<br><code>objc_msgSend(receiver, selector)</code><br>任何传入消息的参数都被交给<code>objc_msgSend</code>:<br><code>1.  objc_msgSend(receiver, selector, arg1, arg2, ...);</code></p>
+<h2 id="objc-msgSend函数"><a href="#objc-msgSend函数" class="headerlink" title="objc_msgSend函数"></a>objc_msgSend函数</h2><p>在OC中，直到运行时之前，消息不会被绑定到方法的实现。编译器会转换一个消息表达式:<br><code>[receiver message]</code><br>转变为一个消息函数的调用——<code>objc_msgSend</code>。函数带有接受者和方法提及的名字，作为方法选择器的两个主要参数:<br><code>objc_msgSend(receiver, selector)</code><br>任何传入消息的参数都被交给<code>objc_msgSend</code>:<br><code>objc_msgSend(receiver, selector, arg1, arg2, ...);</code></p>
 <p>消息函数做了所有动态绑定所必需的事情：</p>
 <ul>
 <li>它首先找到选择器所引用的方法实现。由于相同的方法可以被单独的类不同地实现，它找到的确切的方法实现取决于接受者所属的类。</li>
@@ -434,10 +434,10 @@
 <li>一个类的调度表。这个表包含关联了方法选择器与它们标记的类特定方法的地址。<code>setOrigin:</code>方法的选择器与<code>setOrigin:</code>的地址关联起来，等等。</li>
 </ul>
 <p>当一个新的对象被创建的时候，内存会为它开辟一部分空间，它的实例变量同时被初始化。对象的所有变量中的第一个是一个指向它的类结构的指针，这个指针叫做<strong>isa指针</strong>，提供给对象访问它的类，通过类，到达所有该类继承的类。</p>
-<p>注意：严格说虽然不是语言的一部分，isa指针对于工作在OC运行时系统中的对象来说是必须的。一个对象需要与结构体<code>struct objc_object</code>::在objc/objc.h中定义::中定义的任何字段“等同”，但是，你很少，如果有需要创建你自己的根对象，从NSObject或者NSProxy集成而来的类对象都自动拥有isa变量。</p>
+<p>注意：严格说虽然不是语言的一部分，isa指针对于工作在OC运行时系统中的对象来说是必须的。一个对象需要与结构体<code>struct objc_object</code>在objc/objc.h中定义中定义的任何字段“等同”，但是，除非有需要你很少创建你自己的根对象，从NSObject或者NSProxy集成而来的类对象都自动拥有isa变量。</p>
 <p><img src="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb5fs8stnkg30980f4glp.gif" alt=""></p>
 <p>当一条消息发送给一个对象的时候，消息函数跟随对象的isa指针到它的类结构，在调度表中查找方法的选择器，如果他不能在那找到选择器，<code>objc_msgSend</code>跟随指针来到父类并且试着在调度表中找到选择器，连续的失败会使<code>objc_msgSend</code>沿着继承机构向上寻找直到它到达NSObject类，一旦它发现选择器，该函数调用表中输入的方法并将其传递给接收对象的数据结构。</p>
-<p><strong>这里着重说明一个知识点：</strong><br>       <em>在一个类中调用<code>[super class]</code>很多初学者会认为输出父类的名字，但是结果却还是与<code>[self class]</code>相同的输出，而又不理解，其实self是类的隐藏参数，指向当前调用方法的类，另一个隐藏参数是<code>_cmd</code>前面已经介绍过，带表当前方法的selector，这里只关注这个self，而super并不是一个隐藏参数，它是一个“编译器指示符”，和self指向相同的消息接受者，<code>[self class]</code>和<code>[super class]</code>，接收class消息的都是指向当前类的指针，而不是想当然的super指向的父类，不同之处在于super只是告诉编译器，调用方法是要去调用父类的class方法而不是本类的，其实self和super最后调用的都是NSObject定义的方法，输出本类的类名，所以才会出现上面那种结果。</em></p>
+<p><strong>这里着重说明一个知识点：</strong><br>       <em>在一个类中调用<code>[super class]</code>很多初学者会认为输出父类的名字，但是结果却还是与<code>[self class]</code>相同的输出，而又不理解，其实self是类的隐藏参数，指向当前调用方法的类，另一个隐藏参数是<code>_cmd</code>前面已经介绍过，代表当前方法的selector，这里只关注这个self，而super并不是一个隐藏参数，它是一个“编译器指示符”，和self指向相同的消息接受者，<code>[self class]</code>和<code>[super class]</code>，接收class消息的都是指向当前类的指针，而不是想当然的super指向的父类，不同之处在于super只是告诉编译器，调用方法是要去调用父类的class方法而不是本类的，其实self和super最后调用的都是NSObject定义的方法，输出本类的类名，所以才会出现上面那种结果。</em></p>
 <p>这就是方法实现在运行时才会确定的实现方式，或者用面向对象编程的行话，那些方法与消息动态绑定。</p>
 <p>为了加快消息的传递过程，运行时系统缓存它们用到的选择器和方法的地址，每一个类都有一个单独的缓存，它能包含继承方法，就像它们自己定义的一样。在搜索调度表之前，发送消息例行在它的接收对象的类的缓存中查找（理论上，一个方法被使用一次可能会被再次使用），如果方法选择器在缓存中，消息传递仅仅比函数调用略微慢一点点。一旦一个程序已经运行的足够长的时间来“预热”它的缓存，几乎所有的消息都会找到缓存方法，在程序运行过程中，缓存动态增加来容纳新消息。</p>
 <h2 id="使用隐藏参数"><a href="#使用隐藏参数" class="headerlink" title="使用隐藏参数"></a>使用隐藏参数</h2><p>当<code>objc_msgSend</code>找到了方法实现的程序段，它调用这段程序并传递消息中的所有参数，它也会传递给这段程序两个隐藏的参数：</p>
@@ -457,15 +457,14 @@
 }  
 </code></pre><p>self在两个参数中更有用一些,事实上，这是接收的对象的实例变量对于方法定义变得可用的方式。</p>
 <h2 id="得到一个方法地址"><a href="#得到一个方法地址" class="headerlink" title="得到一个方法地址"></a>得到一个方法地址</h2><p>绕过动态绑定的唯一方式就是得到方法的地址并像调用函数一样调用它。这在极少数场合是合适的，当一个特定的方法被连续调用多次的时候而且你想避免方法每次被执行发送消息的开销。</p>
-<p>一个定义在NSObject类中的方法，<code>methodForSelector:</code>你可以要求一个指向实现一个方法的过程的指针，然后用指针调用这个过程，<code>methodForSelector:</code>返回的指针必须仔细转换到恰当的函数类型。返回和参数类型都应该包含在转换中。</p>
-<p>下面的例子展示了setFilled:方法的实现过程如何被调用：<br>void (*setter)(id, SEL, BOOL);<br>int i;<br>setter = (void (*)(id, SEL, BOOL))[target<br>    methodForSelector:@selector(setFilled:)];<br>for ( i = 0 ; i \&lt; 1000 ; i++ )<br>    setter(targetList[i], @selector(setFilled:), YES);</p>
+<p>一个定义在NSObject类中的方法，<code>methodForSelector:</code>你可以要求一个指向实现一个方法的过程的指针，然后用指针调用这个过程，<code>methodForSelector:</code>返回的指针必须仔细转换到恰当的函数类型。返回值和参数类型都应该包含在转换中。</p>
+<p>下面的例子展示了setFilled:方法的实现过程如何被调用：<br>    void (*setter)(id, SEL, BOOL);<br>    int i;<br>    setter = (void (*)(id, SEL, BOOL))[target<br>        methodForSelector:@selector(setFilled:)];<br>    for ( i = 0 ; i &lt; 1000 ; i++ )<br>        setter(targetList[i], @selector(setFilled:), YES);</p>
 <p>第一次被传过去的两个参数是接收对象self和方法选择器<code>_cmd</code>。<br>这些参数在方法语法中被隐藏，但是当方法被当做函数调用的时候必须显示的传递。</p>
-<p>使用<code>methodForSelector:</code>来规避动态绑定节约了大量发送消息所需的时间，要使节省变得有意义，必须当一个特定的消息重复很多次的时候，就像上面for循环展示的那样。</p>
 <p>使用<code>methodForSelector:</code>来规避动态绑定节约了大量发送消息所需的时间，要使节省变得有意义，必须当一个特定的消息重复很多次的时候，就像上面for循环展示的那样。</p>
 <hr>
 <h1 id="动态方法解析"><a href="#动态方法解析" class="headerlink" title="动态方法解析"></a>动态方法解析</h1><p><em>这节描述了如何动态地提供一个方法。</em></p>
 <h2 id="动态方法解析-1"><a href="#动态方法解析-1" class="headerlink" title="动态方法解析"></a>动态方法解析</h2><p>有时你会想要动态地提供一个方法的实现，例如，OC声明属性特性包含@dynamic关键字<br><code>@dynamic propertyName;</code><br>告诉编译器与属性关联的方法会被动态地提供。</p>
-<p>你可以实现方法resolveInstanceMethod:和方法resolveClassMethod:来分别地动态提供一个给定selector，实例和类名的方法实现。<br>一个OC方法的根本就是带有self和<code>_cmd</code>两个参数的C函数，你可以用函数<code>class_addMethod</code>来添加一个函数到类中去作为方法。因此给出以下函数:<br>    void dynamicMethodIMP(id self, SEL _cmd) {<br>        // implementation ….<br>    }</p>
+<p>你可以实现方法resolveInstanceMethod:和方法resolveClassMethod:来分别地动态提供一个给定selector，实例和类名的方法实现。<br><strong>一个OC方法的根本就是带有self和_cmd两个参数的C函数</strong>，你可以用函数<code>class_addMethod</code>来添加一个函数到类中去作为方法。因此给出以下函数:<br>    void dynamicMethodIMP(id self, SEL _cmd) {<br>        // implementation ….<br>    }</p>
 <p>你可以使用方法<code>resolveInstanceMethod:</code>动态添加它的实现到类中作为方法（resolveThisMethodDynamically):<br>    @implementation MyClass  </p>
 <pre><code>+ (BOOL)resolveInstanceMethod:(SEL)aSEL  
 {  
@@ -480,7 +479,7 @@
 <p>每个方法都有一个<strong>SEL(selector)</strong>和一个<strong>IML(implement)</strong>，SEL可以随便写，但是不一定有对应的IML，如果消息函数沿着继承层次结构找到了顶端还是找不到对应的方法实现，就会抛出异常而crash。</p>
 <p>上文提到“消息函数做了所有动态绑定所必需的事情：它首先找到选择器所引用的方法实现。”但是如果一直没有找到，就会开始尝试动态解析，消息转发，标准消息转发：<br><img src="http://ww2.sinaimg.cn/large/0060lm7Tgw1fb5fs9fof3j30st07bjsu.jpg" alt=""></p>
 <p>其实这就是通过SEL查找IML，这个过程也可以用下图表示：<br><img src="http://ww3.sinaimg.cn/large/0060lm7Tgw1fb5fs9dxyjj30o110ljwv.jpg" alt=""></p>
-<h2 id="resolveInstanceMethod函数"><a href="#resolveInstanceMethod函数" class="headerlink" title="resolveInstanceMethod函数"></a>resolveInstanceMethod函数</h2><p>函数原型是：<br><code>1.  + (BOOL)resolveInstanceMethod:(SEL)name;</code></p>
+<h2 id="resolveInstanceMethod函数"><a href="#resolveInstanceMethod函数" class="headerlink" title="resolveInstanceMethod函数"></a>resolveInstanceMethod函数</h2><p>函数原型是：<br><code>+ (BOOL)resolveInstanceMethod:(SEL)name;</code></p>
 <p>在运行时（runtime），SEL没有找到对应的IML就会先执行这个函数，这个函数是给类利用<code>class_addMethod</code>添加方法的机会。如果实现了添加方法的代码则返回YES，如果没有实现则返回NO。<br>新建一个工程在.m文件添加如下代码：</p>
 <pre><code>#import &quot;ViewController.h&quot;  
 @interface ViewController()  
@@ -494,7 +493,7 @@
     [super didReveiceMemoryWarning];  
 }  
 </code></pre><p>结果就是程序crash控制台报错：<br><code>terminating with uncaught exceptionof type NSException</code></p>
-<p>因为程序没有找到doSomething:这个方法，下面我们实现:<br><code>1.  + (BOOL)resolveInstanceMethod:(SEL)sel;</code></p>
+<p>因为程序没有找到doSomething:这个方法，下面我们实现:<br><code>+ (BOOL)resolveInstanceMethod:(SEL)sel;</code></p>
 <p>并且判断若果sel是doSomething:那就说出add method here</p>
 <pre><code>#import &quot;ViewController.h&quot;  
 @interface ViewController()  
@@ -604,7 +603,7 @@ void dynamicMethodIMP(id self, SEL _cmd){
 } 
 </code></pre><p>我们会发现secondVCMethod方法执行了，程序并没有崩溃，原因在于当没有找到secondVCMethod这个方法的时候消息一直传递到方法<br><code>- (id)forwadingTargetForSelector:(SEL)aSelector</code></p>
 <p>然后在里面创建了一个SecondViewController的对象，并判断如果这个需要转发的方法是secondViewController中的方法就返回secondViewController的对象，消息成功转发给secondViewController的对象，并执行。同时也相当于完成了一个多继承。</p>
-<h1 id="动态加载"><a href="#动态加载" class="headerlink" title="动态加载"></a>动态加载</h1><p>一个OC程序可以在运行的时候绑定并连接新的类和分类。新的代码会被合并到程序中，与一开始就加载的代码没有区别。<br>动态加载可以被用来做血多不同的事情，例如，在系统APP的许多模块都是动态绑定。<br>在Cocoa环境下，动态绑定通常被用来自定义APP。其他则是用来写一些运行时加载的组件——就像Interface Builder加载定制的调色板和OS X系统应用加载自定义模块一样，可加载模块扩展了你的应用可以做什么，它们的贡献在于你提供框架，他人提供代码。<br>虽然运行时函数在Mach-O文件中执行动态绑定（<code>objc_loadModiles</code>,在<code>objc_load.h</code>中定义），Cocoa的NSbundle类为动态帮顶提供了一个显着更方便的接口——一种面向对象并与相关服务集成的接口。在Foundation框架查看NSBundle类的说明参考类的信息和它所使用的。通过 <strong>《OS X ABI Mach-O 文件格式参考》</strong>查看Mach-O文件的信息。</p>
+<h1 id="动态加载"><a href="#动态加载" class="headerlink" title="动态加载"></a>动态加载</h1><p>一个OC程序可以在运行的时候绑定并连接新的类和分类。新的代码会被合并到程序中，与一开始就加载的代码没有区别。<br>动态加载可以被用来做血多不同的事情，例如，在系统APP的许多模块都是动态绑定。<br>在Cocoa环境下，动态绑定通常被用来自定义APP。其他则是用来写一些运行时加载的组件——就像Interface Builder加载定制的调色板和OS X系统应用加载自定义模块一样，可加载模块扩展了你的应用可以做什么，它们的贡献在于你提供框架，他人提供代码。<br>虽然运行时函数在Mach-O文件中执行动态绑定（<code>objc_loadModiles</code>,在<code>objc_load.h</code>中定义），Cocoa的NSbundle类为动态绑定提供了一个显着更方便的接口——一种面向对象并与相关服务集成的接口。在Foundation框架查看NSBundle类的说明参考类的信息和它所使用的。通过 <strong>《OS X ABI Mach-O 文件格式参考》</strong>查看Mach-O文件的信息。</p>
 <hr>
 <h1 id="消息转发"><a href="#消息转发" class="headerlink" title="消息转发"></a>消息转发</h1><p>向一个对象发送消息，对象没有处理消息，就会报错。然而，在报错之前，运行时系统给接收消息的对象两个选择去处理消息。</p>
 <h2 id="转发"><a href="#转发" class="headerlink" title="转发"></a>转发</h2><p>如果你给一个对象发送消息，并且这个对象没有处理这个消息，在抛出一个错误之前，运行时系统会向对象发送一个消息：<br><code>forwardInvocation:</code></p>
@@ -642,7 +641,7 @@ void dynamicMethodIMP(id self, SEL _cmd){
 <p>转发消息的对象从而 从继承树上的两个分支继承了方法——它自己的分支和响应消息的对象的分支。在上面的例子中，他看上去好像Warrior类继承了Diplomat类以及它自己的父类。</p>
 <h2 id="代理对象"><a href="#代理对象" class="headerlink" title="代理对象"></a>代理对象</h2><p>转发不仅仅模拟多继承，它也使得可以开发代表或覆盖更多实体类型的轻量级对象，The surrogate stands in for the other object and funnels messages to it.（谁来翻译一下）</p>
 <p>在The Objective-C Programing Language中讨论的远程通知就是一个代理，代理负责管理对一个远程接受者转发消息的细节，确保参数值在整个链接上被复制和检索，等等。但是它并不试图去做其他更多的事情，它不复制远程对象的功能，只是给远程对象一个它可以在其他应用接受消息的本地地址。</p>
-<p>其他类型的代理对象同意可以。假设，例如你有一个对象操作许多数据——也许它创建一个复杂的图片或者读取磁盘上一个文件的内容。设置这个对象可能非常耗时，所以你宁愿懒惰地使用它——当它真正被需要或者当系统资源暂时空闲的时候。同一时间，你需要至少一个此对象的占位符来保证其他对象在该应用中正常工作。</p>
+<p>其他类型的代理对象同样可以。假设，例如你有一个对象操作许多数据——也许它创建一个复杂的图片或者读取磁盘上一个文件的内容。设置这个对象可能非常耗时，所以你宁愿懒惰地使用它——当它真正被需要或者当系统资源暂时空闲的时候。同一时间，你需要至少一个此对象的占位符来保证其他对象在该应用中正常工作。</p>
 <p>在这种情况下，你开始可能创建了一个不成熟的对象，但是你可以为它创建一个轻量级的代理。这个对象可能会自己做一些事情，例如询问关于数据的问题，但是大多数时候它仅仅是为更大的对象占据一个位置，当时间到了，给它转发消息。当代理的<code>forwardInvocation</code>方法首先接收到去往其他对象的消息，它会确保对象存在并且如果没有被创建的话它会创建对象。较大对象的所有消息都会通过代理，所以，至于关于程序的其他部分，代理和较大的对象是相同的。</p>
 <h2 id="转发和继承"><a href="#转发和继承" class="headerlink" title="转发和继承"></a>转发和继承</h2><p>虽然转发模拟继承，但是NSObject类绝对不会混淆两者。像方法<code>respondsToSelector:</code>和<code>isKindOfClass</code>仅仅查看继承层次结构，并不在转发链上。如果，例如一个Warrios对象被询问是否响应<code>negotiate</code>消息<br> if ([aWarrior respondsToSelector:@selector(negotiate)])<br>答案是NO，即使它能不报错误地接收<code>negotiate</code>消息并响应他们，在某种意义上，通过转发消息给一个Diolomat对象。</p>
 <p>在许多例子中，答案是NO。但它可能不是。如果你使用转发设置一个代理对象或者扩展一个类的能力，转发机制大概应该像继承一样透明。如果你想让你的对象表现出它们好像真正的继承了他们转发消息的目标的行为，你需要重新实现<code>respondsToSelector:</code>方法和<code>isKindOfClass</code>方法来包含你的转发规则。</p>
@@ -668,7 +667,7 @@ void dynamicMethodIMP(id self, SEL _cmd){
 }
 </code></pre><p>你可能考虑将转发规则放在私有代码中，并拥有他们，包括<code>forwardInvocation</code>，调用它。</p>
 <p>注意：这是一种高级技术，仅仅适合没有其他解决办法的时候使用。它并不是意在代替继承来使用。如果你一定要使用这种技术，确保你完全了解了执行转发的类和要被转发到达的类的行为。</p>
-<p>上述提及的方法都被编写在Foundation框架下的NSObject类的说明中。get有关<code>invokeWithTar</code>的信息请查看Foundation框架下的 NSInvocation类说明。</p>
+<p>上述提及的方法都被编写在Foundation框架下的NSObject类的说明中。获得有关<code>invokeWithTarget</code>的信息请查看Foundation框架下的 NSInvocation类说明。</p>
 <hr>
 <h1 id="类型编码"><a href="#类型编码" class="headerlink" title="类型编码"></a>类型编码</h1><p>为了辅助运行时系统，编译器为字符串中的每个方法编码返回值和参数类型，并将字符串与方法选择器相关联。它使用的编码模式同样适用于其他上下文，因此公开了可获得的编译器指令@encode。当给一个类型说明，<code>@encode</code>返回该类型的编码字符串。这些类型可以是基础类型，例如整形，指针，一个结构体或者联合体，或者一个类名——任何类型都可以，事实上，他可以用作C语言<code>sizeof</code>运算符的参数。</p>
 <p>char *buf1 = @encode(int **);<br>char *buf2 = @encode(struct key);<br>char *buf3 = @encode(Rectangle);</p>
@@ -778,22 +777,22 @@ void dynamicMethodIMP(id self, SEL _cmd){
 <p><strong>重要：Objective-C不支持long double类型。<code>@encode(long double)</code>返回d，与double类型返回的一样。</strong></p>
 <p>数组的类型代码在方括号中；数组中的元素数量紧随开括号指定，在数组类型之前。例如一个包含12个浮点数指针的数组将会被编码为：<code>[12 ^f]</code></p>
 <p>结构体被指定在大括号中，联合体在圆括号中。结构体标志首先被列出，紧跟一个等号标识符和用序列表示的结构体内容的代码。例如，结构体：<br>    typedef struct example {<br>    id   anObject;<br>    char *aString;<br>    int  anInt;<br>    } Example</p>
-<p>会被编码为：<br><code>{example=@\*i}</code></p>
-<p>相同的编码结果导致定义的类型名字或者结构体标识是否传递给@encode。结构体指针的编码携带与结构体字段相同的信息量：<br><code>^{example=@\*i}</code></p>
+<p>会被编码为：<br><code>{example=@*i}</code></p>
+<p>相同的编码结果导致定义的类型名字或者结构体标识是否传递给@encode。结构体指针的编码携带与结构体字段相同的信息量：<br><code>^{example=@*i}</code></p>
 <p>然而另一个间接的级别去除了内部类型规范：<br><code>^^{example}</code></p>
 <p>对待对象会像对待结构体那样。例如，将NSObject类名传入@encode()产生这样的编码：<br><code>{NSObject=# }</code></p>
 <p>NSObject类只声明一个实例变量isa，类型是Class。</p>
-<p>注意，尽管@encode指令不返回它们，当它们需要在协议中声明方法是，runtime系统使用额外的编码列表中的类型限定符。<br><img src="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb8ve8brgyj307q0f23z1.jpg" alt=""></p>
+<p>注意，尽管@encode指令不返回它们，当它们需要在协议中声明方法时，runtime系统使用额外的编码列表中的类型限定符。<br><img src="http://ww1.sinaimg.cn/large/0060lm7Tgw1fb8ve8brgyj307q0f23z1.jpg" alt=""></p>
 <hr>
-<h1 id="声明属性"><a href="#声明属性" class="headerlink" title="声明属性"></a>声明属性</h1><p>当编译器遇到属性声明，它生成与封闭类，类别或者协议相关联的描述性元数据。你可以使用支持在类或协议中中通过名字查看属性的函数来访问这些元数据，获得属性的@encode字符编码类型，并将属性的属性列表复制一份C字符串数组。每个类和协议都有一个声明的属性列表。</p>
-<h2 id="属性类型和函数"><a href="#属性类型和函数" class="headerlink" title="属性类型和函数"></a>属性类型和函数</h2><p>Property结构定义了属性描述符的不透明句柄。<br><code>typedef struct objc\_property \*Property</code></p>
-<p>你可以使用函数class_copyPropertyList和protocol_copyPropertyList来分别地检索一个与类和协议相关的属性数组：<br><code>objc\_property\_t *class\_copyPropertyList(Class cls, unsigned int *outCount)</code><br><code>objc\_property\_t *protocol\_copyPropertyList(Protocol *proto, unsigned int \*outCount)</code></p>
+<h1 id="声明属性"><a href="#声明属性" class="headerlink" title="声明属性"></a>声明属性</h1><p>当编译器遇到属性声明，它生成与封闭类，类别或者协议相关联的描述性元数据。你可以使用支持在类或协议中通过名字查看属性的函数来访问这些元数据，获得属性的@encode字符编码类型，并将属性的属性列表复制一份C字符串数组。每个类和协议都有一个声明的属性列表。</p>
+<h2 id="属性类型和函数"><a href="#属性类型和函数" class="headerlink" title="属性类型和函数"></a>属性类型和函数</h2><p>Property结构定义了属性描述符的不透明句柄。<br><code>typedef struct objc_property *Property</code></p>
+<p>你可以使用函数class_copyPropertyList和protocol_copyPropertyList来分别地检索一个与类和协议相关的属性数组：<br><code>objc_property_t *class_copyPropertyList(Class cls, unsigned int *outCount)</code><br><code>objc_property_t *protocol_copyPropertyList(Protocol *proto, unsigned int *outCount)</code></p>
 <p>例如给出如下类声明：<br>    @interface Lender : NSObject{<br>        float alone;<br>    }<br>    @property float alone;<br>    @end</p>
 <p><strong>你可以这样获得属性列表:</strong><br>    id LenderClass = objc_getClass(“Lender”);<br>    unsigned int outCount;<br>    objc_property_t *properties = class_copyPropertyList(LenderClass, &amp;outCount);</p>
-<p>你可以使用property_getName函数来发现一个属性名字：<br><code>const char \*property\_getName(objc\_property\_t property)</code></p>
-<p>你可以使用函数class_getProperty和class_getProperty来获得类和协议中给定名称的属性的引用:<br><code>objc\_property\_t class\_getProperty(Class cls, const char \*name)</code><br><code>objc\_property\_t protocol\_getProperty(Protocol *proto, const char *name, BOOL isRequiredProperty, BOOL isInstanceProperty)</code></p>
+<p>你可以使用property_getName函数来发现一个属性名字：<br><code>const char *property_getName(objc_property_t property)</code></p>
+<p>你可以使用函数class_getProperty和class_getProperty来获得类和协议中给定名称的属性的引用:<br><code>objc_property_t class_getProperty(Class cls, const char *name)</code><br><code>objc_property_t protocol_getProperty(Protocol *proto, const char *name, BOOL isRequiredProperty, BOOL isInstanceProperty)</code></p>
 <p>你可以使用 property_getAttributes函数获得一个属性的名字和@encode编码的类型字符串。对于编码类型字符串的详细内容，查看Type Encoding；对于这个字符串的详细内容，查看Property Type String 和Property Attribute Description Examples。（都在本文中）</p>
-<p><code>const char \*property\_getAttributes(objc\_property\_t property)</code></p>
+<p><code>const char *property_getAttributes(objc_property_t property)</code></p>
 <p><strong>同时使用这些函数，使用下面的代码你可以打印出所有与类关联的属性：</strong><br>    id LenderClass = objc_getClass(“Lender”);<br>    unsigned int outCount, i;<br>    objc_property_t *properties = class_copyPropertyList(LenderClass, &amp;outCount);<br>    for (i = 0; i &lt; outCount; i++) {<br>        objc_property_t property = properties[i];<br>        fprintf(stdout, “%s %s\n”, property_getName(property), property_getAttributes(property));<br>    }</p>
 <h2 id="属性类型字符串"><a href="#属性类型字符串" class="headerlink" title="属性类型字符串"></a>属性类型字符串</h2><p>你可以使用<code>property_getAttributes</code>函数查看属性的@encode编码名称和属性中的其他信息。</p>
 <p>该字符串以字母T开始，紧跟着@encode类型和一个逗号，以字母V结束后跟实例变量名称。在它们中间，属性被指定如下描述符，以逗号分隔。</p>
@@ -1074,7 +1073,7 @@ void dynamicMethodIMP(id self, SEL _cmd){
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2016</span>
+  <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
