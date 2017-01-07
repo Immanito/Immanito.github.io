@@ -1,0 +1,1019 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="runloop," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="Run LoopsRun Loops 是线程的基础。一个run loop（运行循环）就是一个事件处理循环，你用来安排工作，协调即将到来的事件。run loop的目的是当有事情需要做的时候保持你的线程繁忙，当没有事情做的时候，保持你的线程休眠。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Runloop笔记（一）">
+<meta property="og:url" content="http://yoursite.com/2017/01/06/Runloop笔记（一）/index.html">
+<meta property="og:site_name" content="Jyq's blog">
+<meta property="og:description" content="Run LoopsRun Loops 是线程的基础。一个run loop（运行循环）就是一个事件处理循环，你用来安排工作，协调即将到来的事件。run loop的目的是当有事情需要做的时候保持你的线程繁忙，当没有事情做的时候，保持你的线程休眠。">
+<meta property="og:image" content="http://ww4.sinaimg.cn/mw690/8b394de9gw1fbg7iugtsnj20dg071aav.jpg">
+<meta property="og:updated_time" content="2017-01-07T18:29:42.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Runloop笔记（一）">
+<meta name="twitter:description" content="Run LoopsRun Loops 是线程的基础。一个run loop（运行循环）就是一个事件处理循环，你用来安排工作，协调即将到来的事件。run loop的目的是当有事情需要做的时候保持你的线程繁忙，当没有事情做的时候，保持你的线程休眠。">
+<meta name="twitter:image" content="http://ww4.sinaimg.cn/mw690/8b394de9gw1fbg7iugtsnj20dg071aav.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/01/06/Runloop笔记（一）/"/>
+
+
+
+
+
+  <title> Runloop笔记（一） | Jyq's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Jyq's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle">iOS</p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-sitemap">
+          <a href="/sitemap.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br />
+            
+            Sitemap
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/06/Runloop笔记（一）/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Immanito">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Jyq's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Jyq's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Runloop笔记（一）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-06T01:02:15+08:00">
+                2017-01-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/01/06/Runloop笔记（一）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/01/06/Runloop笔记（一）/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/01/06/Runloop笔记（一）/" class="leancloud_visitors" data-flag-title="Runloop笔记（一）">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Run-Loops"><a href="#Run-Loops" class="headerlink" title="Run Loops"></a>Run Loops</h1><p>Run Loops 是线程的基础。一个run loop（运行循环）就是一个事件处理循环，你用来安排工作，协调即将到来的事件。run loop的目的是当有事情需要做的时候保持你的线程繁忙，当没有事情做的时候，保持你的线程休眠。<br><a id="more"></a></p>
+<p>Run loop的管理并不是完全自动的。你仍然必须设计你的代码在适宜的时间开启run loop并相应即将到来的事件。Cocoa和Core Foundation框架都提供了run loop对象来帮助你配置、管理你的线程的运行循环。你的应用不需要明确地创建这些对象；包括应用的主线程，每一个线程都有一个关联的run loop对象。然而只有非主线程需要明确运行它们的run loop。APP框架自动地在主线程建立并运行run loop作为APP启动过程的一部分。</p>
+<p>下面的章节提供更多关于run loops和如何为你的应用配置它们的信息。更多关于run loop对象的信息，查看<a href="https://developer.apple.com/reference/foundation/nsrunloop" target="_blank" rel="external">NSRunLoop Class Reference</a>和<a href="https://developer.apple.com/reference/corefoundation/1666621-cfrunloop" target="_blank" rel="external">CFRunLoop Reference</a>。</p>
+<h1 id="剖析Run-Loop"><a href="#剖析Run-Loop" class="headerlink" title="剖析Run Loop"></a>剖析Run Loop</h1><p>run loop非常像它的名字听起来那样，它是一个线程加入的循环，用来运行事件处理器来响应即将到来的事件。你的代码提供控制语句用来实现运行时循环的实际循环部分——换一种说法，你的代码提供while或for循环来驱动run loop。在你的循环中，你使用一个run loop对象来运行接收事件并调用安装处理程序的事件处理代码。</p>
+<p>run loop从两个不同类型的源接收事件。<strong>输入源</strong>传递异步事件，通常是从另一个线程或者另一个应用传递过来的消息。<strong>定时器源</strong>传递同步事件，发生在预定时间或者有重复的间隔。两种类型的源使用应用程序特定的处理器程序来处理到达的事件。</p>
+<p>下图展示了run loop和各种源的概念上的结构。输入源传递异步事件给响应的处理器并导致<code>runUntilDate:</code>（在线程关联的NSRunloop对象上调用）方法退出。定时器源传递时间到它们的处理器程序但是并不会导致run loop退出。<br><img src="http://ww4.sinaimg.cn/mw690/8b394de9gw1fbg7iugtsnj20dg071aav.jpg" alt=""></p>
+<p>除了处理输入源，run loops也生成关于run loop行为的通知。注册run-loop观察者可以接收到这些通知并使用它们在线程上做额外的处理。使用Core Foundation框架在线程上设置run-loop观察者。</p>
+<p>下面章节提供更多关于run loop组件和操作模式的信息。同时描述了在处理事件的不同时刻生成的通知。</p>
+<h2 id="Run-Loop-模式"><a href="#Run-Loop-模式" class="headerlink" title="Run Loop 模式"></a>Run Loop 模式</h2><p>run loop 模式是要监视的输入源和定时器源的集合，以及要通知的run loop观察者集合。每次你运行你的run loop，你可以显式或隐式地指定特定的运行模式。在运行循环过程中，只有与该模式相关联的源被监视并被允许处理它们的事件。（同样地，只有与该模式相关联的观察被通知run loop的进度。）与其他模式相关联的源会保持所有的新事件直到在适宜的模式通过循环。</p>
+<p>在你的代码中，你通过名字识别模式。Cocoa和Core Foundation定义一个默认的模式和几个常用的模式，以及在代码中指定这些模式的字符串。你可以通过简单的声明一个自定义的字符串作为模式名称来自定义一个模式。虽然你分配给自定义模式的名称是任意的，但是这些模式的内容却不是。你必须确认添加一个或者更多的输入源，定时器或者run loop观察者到你创建的任何模式中使它们有用。</p>
+<p>你可以使用模式来过滤一个运行循环中你不想要的源的事件。大多数时间，你想在系统定义的默认模式下运行run loop。然而，模态面板可能在模态模式下运行。当在这个模式下，只有与模态面板有关的源才会传递事件到线程。对于非主线程，你可能会使用自定义模式阻止低优先级源再关键时间操作期间传递事件。</p>
+<p><em>注意：模式的区分基于事件的源，而不是事件的类型。例如，你不会使用模式来匹配仅仅是鼠标向下或者仅仅是键盘有关的事件。你可以使用模式来监听不同的端口集，暂时暂停定时器或者除此之外你可以更改当前正在监视的源和观察者。</em></p>
+<p>下表列出了Cocoa和Core Foundation定义的标准模式以及你何时使用该模式的描述。名称一列列出了在你的代码中指定模式的实际字符串常量。</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>名称</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Default</td>
+<td>NSDefaultRunLoopMode (Cocoa) kCFRunLoopDefaultMode (Core Foundation)</td>
+<td>默认模式适用于大多数操作。大部分时间，你应该使用这种模式开始你的run loop并配置你的输入源</td>
+</tr>
+<tr>
+<td>Connection</td>
+<td>NSConnectionReplyMode (Cocoa)</td>
+<td>Cocoa使用此模式与NSConnection对象一起来监视响应。你很少需要自己使用这种模式。</td>
+</tr>
+<tr>
+<td>Modal</td>
+<td>NSModalPanelRunLoopMode (Cocoa)</td>
+<td>Cocoa使用此模式用于标识模态面板的事件。</td>
+</tr>
+<tr>
+<td>Event tracking</td>
+<td>NSEventTrackingRunLoopMode (Cocoa)</td>
+<td>Cocoa使用此模式在鼠标拖动循环和其他类型的用户界面跟踪循环期间限制传入事件。</td>
+</tr>
+<tr>
+<td>Common modes</td>
+<td>NSRunLoopCommonModes (Cocoa) kCFRunLoopCommonModes (Core Foundation)</td>
+<td>这是一组可配置的常用模式。将输入源与此模式相关联还将其与组中的每个模式相关联。对于Cocoa应用，这个设置默认包括default, modal, and event tracking模式 。Core Foundation框架下最初只包含default模式。你可以使用<strong>CFRunLoopAddCommonMode</strong>函数将自定义模式添加到集合中</td>
+</tr>
+</tbody>
+</table>
+<h2 id="输入源"><a href="#输入源" class="headerlink" title="输入源"></a>输入源</h2><p>输入源异步传递事件给你的线程。事件的源取决于输入源的类型，通常是两个类别之一。Port-based 输入源监听你的应用的Mach端口。Custom输入源监听自定义事件源。就你的run loop而言，你不必在意输入源是port-based 还是 custom。系统通常都会实现两张输入源。两个源之间的区别仅仅是它们发送信号通知的方式。Port-based源通过内核自动发送，自定义源必须从另一个线程手动发送。</p>
+<p>当你创建一个输入源，分配它到run loop的一个或多个模式。模式影响在任何给定时间内来监听那个输入源。大部分时间，你在default模式下运行 run loop，但你也可以指定自定义模式。如果输入源不在当前监听模式下，该输入源生成的任何事件都会被挂起直到run loop进入正确的模式。</p>
+<p>下面章节描述了一些类型的输入源</p>
+<h3 id="Port-Based源"><a href="#Port-Based源" class="headerlink" title="Port-Based源"></a>Port-Based源</h3><p>Cocoa和Core Foundation框架对使用端口相关的对象和函数创建port-based输入源提供了支持。例如，在Cocoa中，你根本不需要直接创建一个输入源。你只需要创建一个端口对象并且使用NSPort的方法添加这个端口到run loop。端口对象会为你处理输入源需要的创建和配置。</p>
+<p>在Core Foundation中，你必须手动创建所有的端口和他们的run loop源。<br>在这两种情况下，你使用与端口不透明类型（CFMachPortRef, CFMessagePortRef, CFSocketRef）相关的函数来创建合适的对象。</p>
+<h3 id="自定义输入源"><a href="#自定义输入源" class="headerlink" title="自定义输入源"></a>自定义输入源</h3><p>要创建一个自定义输入源，你必须使用Core Foundation框架下CFRunLoopSourceRef不透明类型相关联的函数。使用几个回调函数来配置自定义输入源。Core Foundation在不同的点调用这些函数来配置源，处理一些即将到来的事件，并在源代码从运行循环中移除时删除源。</p>
+<p>除了定义当一个事件到达时自定义源的行为以外，你也要定义事件的传递机制。源的这部分在单独的线程上运行，并且负责向输入源提供其数据，并且当该数据准备好进行处理时用于发信号通知。事件的传递机制由你定义，但是不要过于复杂。</p>
+<p>如何创建一个自定义输入源的例子，查看<a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW3" target="_blank" rel="external">Defining a Custom Input Source</a>.对于自定义源的参考信息，也可以查看<a href="https://developer.apple.com/reference/corefoundation/1666619-cfrunloopsource" target="_blank" rel="external">CFRunLoopSource Reference</a>.</p>
+<h3 id="Cocoa执行选择器源"><a href="#Cocoa执行选择器源" class="headerlink" title="Cocoa执行选择器源"></a>Cocoa执行选择器源</h3><p>除了port-based源，Cocoa定义了一个自定义输入源允许你在另一个线程执行方法。像port-based源一样，执行方法选择器的请求在目标线程上是序列化的，减轻了多任务在同一线程上可能发生的同步问题。不像port-based源，执行选择器源在它们执行选择器之后会将自己从run loop移除。</p>
+<p>注意：在OS X 10.5之前，执行选择器源大部分被用来向主线程发生消息，但是在OS X 10.5以及以后和iOS平台，你可以使用它们给任意线程发送消息。</p>
+<p>当在另一个线程执行方法选择器，目标线程必须有一个激活的run loop。对于你创建的线程，这意味着等待知道你的代码明确启动了run loop。因为主线程自己启动run loop，然而，一旦应用程序调用了代理的<code>applicationDidFinishLaunching:</code>方法你就可以对该线程发出调用。run loop通过循环处理所有排队的执行消息选择器的调用，而不是每一次循环迭代处理一个。</p>
+<p>下表列出了定义在NSObject中的方法可以被用来在其它线程执行方法。因为这些方法被声明在NSObject,你可以任何可以访问OC对象的线程使用它们，包括POSIX线程。这些方法实际上不创建新的线程来执行选择器。</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>performSelectorOnMainThread: withObject:waitUntilDone: performSelectorOnMainThread: withObject:waitUntilDone:modes:</td>
+<td>在应用的主线程的下一个run loop循环期间执行指定的选择器。这些方法使你可以选择阻塞当前线程知道选择器被执行。</td>
+</tr>
+<tr>
+<td>performSelector:onThread: withObject:waitUntilDone: performSelector:onThread: withObject:waitUntilDone:modes:</td>
+<td>在你拥有NSThread对象的任意线程执行指定的选择器</td>
+</tr>
+<tr>
+<td>performSelector:withObject:afterDelay: performSelector:withObject:afterDelay:</td>
+<td>在下一个run loop循环开始的指定时间后在当前线程执行指定的选择器。因为它等待直到下个run loop循环开始执行选择器，这些方法提供了来自当前代码的自动微延迟。多个排队的选择器按照他们排队的顺序一个接一个的执行。</td>
+</tr>
+<tr>
+<td>cancelPreviousPerformRequestsWithTarget: cancelPreviousPerformRequestsWithTarget: selector:object:</td>
+<td>让你来取消一个使用performSelector:withObject:afterDelay:或者performSelector:withObject:afterDelay:inModes:方法的消息发送</td>
+</tr>
+</tbody>
+</table>
+<h2 id="定时器源"><a href="#定时器源" class="headerlink" title="定时器源"></a>定时器源</h2><p>定时器源在将来的一个预设时间同步地传递事件。定时器是线程提醒自己做某些事情的途径。例如，在来自用户的连续键盘敲击之间如果过去了一段时间，搜索区域可以使用定时器自动发起搜索，使用该延迟时间给用户在开始搜索前尽可能多的机会来输入想要搜索的字符串。</p>
+<p>即使它生成了基于时间的通知，定时器也不是一个真正的时间机制。像输入源，定时器与你的run loop的特定模式相关联。如果一个定时器不是在当前run loop监听的模式下，它不会触发，直到你在一个定时器支持的模式下运行run loop。同样的，如果run loop在一个正在执行的处理程序中定时器出发了，定时器会等到下一次通过run loop来调用它的处理程序。如果run loop没有运行，定时器不会触发。</p>
+<p>你可以配置定时器来仅仅生成一次时间或是重复生成事件。一个重复的定时器基于预定的触发时间自动地重新预定（一下触发时间），不是当前的触发时间。例如，一个定时器预定在一个特定的时间触发并且每5秒触发一次，预定的触发时间会永远的在原来的5秒钟之后，即使实际触发时间有延迟。如果触发时间延迟很多，错过了一个或者多个预定的触发间隔，定时器仅仅会对错过的时间段做一次触发。再对错过的时间段触发之后，定时器会重新预定下一次的触发时间。</p>
+<p>更多关于配置定时器源的信息，查看<a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW6" target="_blank" rel="external">Configuring Timer Sources</a>。关于参考信息，查看<a href="https://developer.apple.com/reference/foundation/nstimer" target="_blank" rel="external">NSTimer Class Reference</a>或者<a href="https://developer.apple.com/reference/corefoundation/1666612-cfrunlooptimer" target="_blank" rel="external">CFRunLoopTimer Reference</a>。</p>
+<h2 id="Run-Loop-观察者"><a href="#Run-Loop-观察者" class="headerlink" title="Run Loop 观察者"></a>Run Loop 观察者</h2><p>与在你相应的异步或同步事件发生时触发的源相比，run loop观察者在执行循环本身期间在特定的位置触发。你可以使用run loop观察者准备线程来处理给定的时间或者在线程休眠前准备线程。你可以在你的run loop中将run loop观察者与下列事件相关联：</p>
+<ul>
+<li>run loop 的入口</li>
+<li>当run loop要处理一个定时器</li>
+<li>当run loop要处理一个输入源</li>
+<li>当run loop要休眠<ul>
+<li>当run loop被唤醒，但在它处理事件之前唤醒它</li>
+</ul>
+</li>
+<li>从run loop退出</li>
+</ul>
+<p>你可以使用Core Foundation来给APP添加run loop观察者。为了创建一个run loop观察者，你创建一个新的CFRunLoopObserverRef不透明类型的实例。这个类型会保持追踪你的自定义回调函数和其感兴趣的活动。</p>
+<p>类似于定时器，run loop观察者可以使用一次或多次。一个一次性的观察者会在它触发后从run loop移除，而一个可重复的观察者会保持附着在run loop中。当你创建它的时候你可以指定观察者是一次性的还是可重复的。</p>
+<p>关于如何创建一个run loop观察者的例子可以查看<a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW18" target="_blank" rel="external">Configuring the Run Loop</a>。关于参考信息查看<a href="https://developer.apple.com/reference/corefoundation/1666627-cfrunloopobserver" target="_blank" rel="external">CFRunLoopObserver Reference</a>。</p>
+<h2 id="Run-Loop-事件队列"><a href="#Run-Loop-事件队列" class="headerlink" title="Run Loop 事件队列"></a>Run Loop 事件队列</h2><p>每次你运行它，你的线程的run loop处理挂起的事件并对任何附着的观察者生成通知，其执行此项操作的顺序非常具体，如下所示：</p>
+<ol>
+<li>通知观察者已经进入run loop循环</li>
+<li>通知观察者任何准备就绪的定时器即将触发</li>
+<li>通知观察者任何不属于port based的输入源将要触发</li>
+<li>触发准备触发的任何非基于端口的输入源</li>
+<li>如果一个基于端口的输入源准备好等待触发，立即处理时间，去往步骤9</li>
+<li>通知观察者线程即将休眠</li>
+<li>使线程休眠知道下列事件发生：<ul>
+<li>事件到达基于端口的输入源</li>
+<li>定时器触发</li>
+<li>设置run loop的有效期为一个超时的值</li>
+<li>run loop被显式地唤醒</li>
+</ul>
+</li>
+<li>通知观察者线程刚刚唤醒</li>
+<li>处理挂起的事件<ul>
+<li>如果用户定义的定时器触发，处理定时器事件并重启循环。到步骤2</li>
+<li>如果输入源被触发，传递事件</li>
+<li>如果run loop被显式地唤醒但还没有超时，重启loop，到步骤2</li>
+</ul>
+</li>
+<li>通知观察者run loop已经退出</li>
+</ol>
+<p>因为定时器和输入源的观察者通知在这些事件发生前传递，通知时间和实际事件的时间之间存在间隙。如果这些事件之间的间隔是有严重影响的，你可以使用休眠和从休眠唤醒的通知来帮助你关联实际事件之间的时间。</p>
+<p>因为当你运行run loop时，定时器和其他周期性的事件都被传递，要避免循环终止那些事件的传递。这一行为存在的典型的例子是你从应用进入一个循环并重复请求事件来实现一个鼠标跟踪程序，因为你的代码直接抓取事件，而不是让你的应用正常地调度那些事件，激活的定时器可能不会触发直到你的鼠标跟踪程序退出并将控制权返回给你的应用之后。</p>
+<p>run loop可以使用run loop对象显式地唤醒，其他事件同样可能造成run loop被唤醒，添加另一个非基于端口的输入源唤醒run loop，输入源会被立即处理，而不是等待到事件发生。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/runloop/" rel="tag"># runloop</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/26/Runtime笔记（官方Doc翻译+原创）/" rel="next" title="Runtime笔记（官方Doc翻译+原创）">
+                <i class="fa fa-chevron-left"></i> Runtime笔记（官方Doc翻译+原创）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2017/01/06/Runloop笔记（一）/"
+     data-title="Runloop笔记（一）"
+     data-content=""
+     data-url="http://yoursite.com/2017/01/06/Runloop笔记（一）/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/01/06/Runloop笔记（一）/"
+           data-title="Runloop笔记（一）" data-url="http://yoursite.com/2017/01/06/Runloop笔记（一）/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="Immanito" />
+          <p class="site-author-name" itemprop="name">Immanito</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/Immanito" target="_blank" title="github">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  github
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/2335788521" target="_blank" title="weibo">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Run-Loops"><span class="nav-number">1.</span> <span class="nav-text">Run Loops</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#剖析Run-Loop"><span class="nav-number">2.</span> <span class="nav-text">剖析Run Loop</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Run-Loop-模式"><span class="nav-number">2.1.</span> <span class="nav-text">Run Loop 模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#输入源"><span class="nav-number">2.2.</span> <span class="nav-text">输入源</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Port-Based源"><span class="nav-number">2.2.1.</span> <span class="nav-text">Port-Based源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#自定义输入源"><span class="nav-number">2.2.2.</span> <span class="nav-text">自定义输入源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cocoa执行选择器源"><span class="nav-number">2.2.3.</span> <span class="nav-text">Cocoa执行选择器源</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#定时器源"><span class="nav-number">2.3.</span> <span class="nav-text">定时器源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Run-Loop-观察者"><span class="nav-number">2.4.</span> <span class="nav-text">Run Loop 观察者</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Run-Loop-事件队列"><span class="nav-number">2.5.</span> <span class="nav-text">Run Loop 事件队列</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Immanito</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"immanito"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("P3KiVX7LwmJJ31A8Yk93IkNs-gzGzoHsz", "JoBrepUtw1vfKwVlvpawA7MW");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+
+</body>
+</html>
