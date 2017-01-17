@@ -278,6 +278,251 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/06/Runloop笔记（二）/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Immanito">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Jyq's blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Jyq's blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/01/06/Runloop笔记（二）/" itemprop="url">
+                  Runloop笔记（二）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-06T01:02:15+08:00">
+                2017-01-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index">
+                    <span itemprop="name">iOS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/01/06/Runloop笔记（二）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/01/06/Runloop笔记（二）/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/01/06/Runloop笔记（二）/" class="leancloud_visitors" data-flag-title="Runloop笔记（二）">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="什么时候应该使用Run-Loop"><a href="#什么时候应该使用Run-Loop" class="headerlink" title="什么时候应该使用Run Loop"></a>什么时候应该使用Run Loop</h1><p>你需要显式地去运行一个run loop的唯一时机是当你为你的应用创建了一个非主线程的时候。对于你的应用的主线程来说，run loop是基础设施的一个关键部分。因此，应用程序框架提供了运行主应用程序循环的代码，并自动启动该循环。iOS中的UIApplication运行方法启动一个应用的主循环作为正常启动启动队列的一部分。如果你使用Xcode的模板工程来创建你的应用，你不需要显示地调用这些程序。</p>
+<p>对于非主线程，你需要确定run loop是否是必需的，如果是，配置并启动它。你不需要在所有情况下启动线程的run loop。例如，如果你是用一个线程执行一些长时间运行并且预定的任务，你可以避免启动run loop。Run loop用于需要与线程更多交互的情况。例如，如果你计划做以下事情你需要开启run loop：</p>
+<ul>
+<li>使用基于端口的或自定义输入源与其他线程通信</li>
+<li>在线程上使用定时器</li>
+<li>在Cocoa应用使用任何<code>performSelector...</code>方法</li>
+<li>保持线程执行周期性的任务</li>
+</ul>
+<p>如果你选择使用run loop，配置和设置是简单的。正如所有的多线程编程一样，你应该计划好在适宜的情况下退出非主线程。让线程退出而干净的结束线程要比强制终止它要好。关于如何配置和退出run loop的信息在<a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW5" target="_blank" rel="external">Using Run Loop Objects</a>中描述。</p>
+<h1 id="使用Run-Loop对象"><a href="#使用Run-Loop对象" class="headerlink" title="使用Run Loop对象"></a>使用Run Loop对象</h1><p>run loop对象提供为run loop添加输入源，定时器和run loop监听者并运行它的主要接口。每个线程都有一个单独的run loop对象与之关联。在Cocoa中，这个对象是一个NSRunloop类的实例。在低级应用中，他是一个CFRunLoopRef不透明类型的指针。</p>
+<h2 id="获得一个Run-Loop对象"><a href="#获得一个Run-Loop对象" class="headerlink" title="获得一个Run Loop对象"></a>获得一个Run Loop对象</h2><p>获得当前线程的run loop你可以使用以下其中一种：</p>
+<ul>
+<li>在Cocoa应用中，使用NSRunLoop的<code>currentRunLoop</code>类方法来获取一个NSRunLoop对象</li>
+<li>使用<code>CFRunLoopGetCurrent</code>函数<br>虽然它们不是免桥接类型，当需要时你可以从NSRunLoop对象获得一个CFRunLoop不透明类型。NSRunloop类定义了一个<code>getCFRunLoop</code>方法会返回一个CFRunLoopRef类型，你可以传递到Core Foundation程序。因为对象都引用相同的run loop，如果需要你可以交叉调用NSRunLoop对象和CFRunLoopRef不透明类型。</li>
+</ul>
+<h2 id="配置-Run-Loop"><a href="#配置-Run-Loop" class="headerlink" title="配置 Run Loop"></a>配置 Run Loop</h2><p>在你在非主线程运行一个run loop之前，你必须向它添加至少一个输入源或者计时器。如果一个run loop没有任何源或者监听者，当你试图运行它的时候它会立即退出。查看如何添加一个源到run loop，请查看本章节。<br>除了添加源之外，你也可以添加run loop观察者并使用他们来检测run loop运行的不同阶段。来创建一个run loop观察者，创建一个CFRunLoopObserverRef不透明类型并使用CFRunLoopAddObserver函数来添加到你的run loop。即使是Cocoa应用，Run loop观察者必须使用Core Foundation来创建。</p>
+<p>下面的代码片展示了讲一个run loop观察者附加到起run loop线程。例子的目的是向你展示如何创建一个run loop 观察者，因此代码只是简单地设置一个run loop观察者来监视所有的run loop活动。在处理定时器请求时，基本的处理程序简单地记录run loop活动。</p>
+<pre><code>- (void)threadMain
+{
+    //应用使用garbage collection所以不需要自动释放池
+    //garbage collection？？？？哪个年代的代码了？？？
+    NSRunLoop *myRunLoop = [NSRunLoop currentRunLoop];
+    //创建一个run loop观察者附着到当前run loop
+    CFRunLoopObserverContext context = {0, self, NULL, NULL, NULL};
+    CFRunLoopObserverRef observer = CFRunLoopObserverCreat(kCFAllocatorDefault, kCFRunLoopAllActivities, YES, 0, &amp;myRunLoopObserver, &amp;context);
+    if(observer)
+    {
+        CFRunLoopRef cfLoop = [myRunLoop getCFRunLoop];
+        CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);
+    }
+    [NSTimer scheduleTimerWithTimeInterval:0.1 target:self selector:@selector(doFireTimer:) userInfo:nil repeats:YES];
+    NSInteger loopCount = 10;
+    do
+    {
+        [myRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
+        loopCount--;
+    }
+    while(loopCount);
+}
+</code></pre><p>当为一个常驻线程配置run loop时，最好至少添加一个输入源以接收消息。虽然你可以进入只有一个定时器附属的run loop，一旦定时器触发，它通常是无效的，这将导致run loop退出。添加一个重复运行的定时器可以保持run loop运行更长时间，但是会周期性地触发定时器而唤醒线程，这实际上是另一种形式的轮询。相比之下，输入源等待一个事件发生，保持你的线程休眠知道它发生。</p>
+<h2 id="启动run-loop"><a href="#启动run-loop" class="headerlink" title="启动run loop"></a>启动run loop</h2><p>仅对应用程序中的非主线程才需要启动运行循环。run loop必须有至少一个输入源或者定时器来监听。如果没有一个附着在run loop，run loop会立即退出。</p>
+<p>这里有几种方式启动run loop:</p>
+<ul>
+<li>无条件地</li>
+<li>有一个设定的时间限制</li>
+<li>再一个特定的模式中</li>
+</ul>
+<p>无条件进入run loop是最简单的方式，但是也是最不可取的。无条件运行你的run loop将线程置入常驻loop，这给你很少的控制运行循环本身。你可以添加或者移除输入源或定时器，但是停止它的唯一办法就是杀死它。同样也不能在自定义模式运行run loo.</p>
+<p>除了无条件运行run loop，最好使用超时值来运行。当你使用一个超时值，run loop运行直到一个事件到达或者分配的时间到期。如果一个事件到达，事件被分配到处理器进行处理，然后run loop退出。你的代码能够在随后重启run loop来处理下一个事件。如果是分配的时间到了，你可以只是重启run loop或者用时间做任何需要的内务。</p>
+<p>除了超时值以外，你也可以使用特殊模式运行run loop。模式和超时值并不是相互独立的，可以在启动线程时同时使用。模式限制了传递到run loop事件的源的类型，在Run Loop Modes中有详细描述。</p>
+<p>下面展示了一个线程的主入口程序的框架版。此示例的关键部分显示了运行循环的基本结构。本质上，你添加输入源和定时器到run loop然后重复地调用一个例程来启动run loop。每一次run loop例程返回，你检查，看看是否有任何条件已经出现，可能令线程退出。例子使用了Core Foundation框架run loop历程，它可以检查返回结果并判断为什么run loop退出。如果你使用Cocoa并且不需要检查返回值你也可以使用NSRunloop类的方法以一个类似的方式运行run loop。</p>
+<pre><code>- (void)skeletonThreadMain
+{
+    // Set up an autorelease pool here if not using garbage collection.
+    BOOL done = NO;
+
+    // Add your sources or timers to the run loop and do any other setup.
+
+    do
+    {
+        // Start the run loop but return after each source is handled.
+        SInt32    result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 10, YES);
+
+        // If a source explicitly stopped the run loop, or if there are no
+        // sources or timers, go ahead and exit.
+        if ((result == kCFRunLoopRunStopped) || (result == kCFRunLoopRunFinished))
+            done = YES;
+
+        // Check for any other exit conditions here and set the
+        // done variable as needed.
+    }
+    while (!done);
+
+    // Clean up code here. Be sure to release any allocated autorelease pools.
+}
+</code></pre><p>可以递归运行run loop，换一种说法，你可以从输入源或定时器的处理例程中调用CFRunLoopRun, CFRunLoopRunInMode或者任何NSRunloop方法来启动run loop。当你这样做时你可以使用任何你想要的模式来嵌套运行run loop，包括外部run loop使用的模式。</p>
+<h2 id="退出Run-Loop"><a href="#退出Run-Loop" class="headerlink" title="退出Run Loop"></a>退出Run Loop</h2><p>在处理一个事件前退出run loop有2种方式：</p>
+<ul>
+<li>将运行循环配置为使用超时值运行</li>
+<li>通知run loop停止</li>
+</ul>
+<p>如果你能管理它，使用超时值当然是首选的。指定超时值允许运行循环完成所有正常处理，包括在退出之前向运行循环观察者发送通知。使用CFRunLoopStop函数显式地停止运行循环会产生类似于超时的结果。run loop发送剩余的所有run-loop通知然后退出。不同的是你可以在你启动的线程上无条件的使用这个技术。</p>
+<p>虽然移除run loop的输入源和定时器可能会造成run loop退出，这不是一个停止run loop的可靠方法。一些系统例程添加输入源到run loop来处理需要的事件。因为你的代码可能不知道这些输入源，它将无法删除它们，这将阻止run loop退出。</p>
+<h2 id="线程安全和Run-Loop对象"><a href="#线程安全和Run-Loop对象" class="headerlink" title="线程安全和Run Loop对象"></a>线程安全和Run Loop对象</h2><p>线程安全性取决你你用来操作run loop的API。Core Foundation函数一般是安全的，并且可以在任意线程被调用，如果你执行更改了run loop配置的操作，无论何时，对于拥有run loop的线程这仍然是一个好的做法。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/06/Runloop笔记（一）/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -788,7 +1033,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
