@@ -90,7 +90,7 @@
 <meta property="og:url" content="http://yoursite.com/2017/01/06/Runloop笔记（二）/index.html">
 <meta property="og:site_name" content="Jyq's blog">
 <meta property="og:description" content="什么时候应该使用Run Loop你需要显式地去运行一个run loop的唯一时机是当你为你的应用创建了一个非主线程的时候。对于你的应用的主线程来说，run loop是基础设施的一个关键部分。因此，应用程序框架提供了运行主应用程序循环的代码，并自动启动该循环。iOS中的UIApplication运行方法启动一个应用的主循环作为正常启动启动队列的一部分。如果你使用Xcode的模板工程来创建你的应用，你">
-<meta property="og:updated_time" content="2017-01-17T02:09:22.000Z">
+<meta property="og:updated_time" content="2017-01-17T02:11:08.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Runloop笔记（二）">
 <meta name="twitter:description" content="什么时候应该使用Run Loop你需要显式地去运行一个run loop的唯一时机是当你为你的应用创建了一个非主线程的时候。对于你的应用的主线程来说，run loop是基础设施的一个关键部分。因此，应用程序框架提供了运行主应用程序循环的代码，并自动启动该循环。iOS中的UIApplication运行方法启动一个应用的主循环作为正常启动启动队列的一部分。如果你使用Xcode的模板工程来创建你的应用，你">
@@ -398,7 +398,7 @@
       
 
       
-        <h1 id="什么时候应该使用Run-Loop"><a href="#什么时候应该使用Run-Loop" class="headerlink" title="什么时候应该使用Run Loop"></a>什么时候应该使用Run Loop</h1><p>你需要显式地去运行一个run loop的唯一时机是当你为你的应用创建了一个非主线程的时候。对于你的应用的主线程来说，run loop是基础设施的一个关键部分。因此，应用程序框架提供了运行主应用程序循环的代码，并自动启动该循环。iOS中的UIApplication运行方法启动一个应用的主循环作为正常启动启动队列的一部分。如果你使用Xcode的模板工程来创建你的应用，你不需要显示地调用这些程序。</p>
+        <h1 id="什么时候应该使用Run-Loop"><a href="#什么时候应该使用Run-Loop" class="headerlink" title="什么时候应该使用Run Loop"></a>什么时候应该使用Run Loop</h1><p>你需要显式地去运行一个run loop的唯一时机是当你为你的应用创建了一个非主线程的时候。对于你的应用的主线程来说，run loop是基础设施的一个关键部分。因此，应用程序框架提供了运行主应用程序循环的代码，并自动启动该循环。iOS中的UIApplication运行方法启动一个应用的主循环作为正常启动启动队列的一部分。如果你使用Xcode的模板工程来创建你的应用，你不需要显示地调用这些程序。<br><a id="more"></a></p>
 <p>对于非主线程，你需要确定run loop是否是必需的，如果是，配置并启动它。你不需要在所有情况下启动线程的run loop。例如，如果你是用一个线程执行一些长时间运行并且预定的任务，你可以避免启动run loop。Run loop用于需要与线程更多交互的情况。例如，如果你计划做以下事情你需要开启run loop：</p>
 <ul>
 <li>使用基于端口的或自定义输入源与其他线程通信</li>
@@ -514,8 +514,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/01/06/Runloop笔记（一）/" rel="next" title="Runloop笔记（一）">
-                <i class="fa fa-chevron-left"></i> Runloop笔记（一）
+              <a href="/2016/12/26/Runtime笔记（官方Doc翻译+原创）/" rel="next" title="Runtime笔记（官方Doc翻译+原创）">
+                <i class="fa fa-chevron-left"></i> Runtime笔记（官方Doc翻译+原创）
               </a>
             
           </div>
@@ -523,6 +523,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/01/06/Runloop笔记（一）/" rel="prev" title="Runloop笔记（一）">
+                Runloop笔记（一） <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
